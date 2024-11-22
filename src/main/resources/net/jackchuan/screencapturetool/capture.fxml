@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.collections.FXCollections?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="net.jackchuan.screencapturetool.controller.CaptureDisplayController"
+            prefHeight="400.0" prefWidth="600.0">
+
+    <top>
+        <ToolBar>
+            <Button styleClass="icon-button" onAction="#upload">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/upload.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="upload local picture" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#saveCapture">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/save.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Export to local" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#copy">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/copy.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Save to cut board" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Separator/>
+            <Button styleClass="icon-button" onAction="#resetImage">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/reload.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="reset image" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+            <Button styleClass="icon-button" onAction="#clearAllRecord">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/clear_record.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="clear all edit " styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+            <Separator/>
+
+            <Button styleClass="icon-button" onAction="#dragMode" fx:id="drag">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/drag.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="drag image" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#pencilMode" fx:id="pencil">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/pencil.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw line" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#rubberMode" fx:id="rubber">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/rubber.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw line" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#drawRect" fx:id="rect">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/rect.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw rectangle" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#drawFilledRect" fx:id="filledRect">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/filled_rect.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw filled rectangle" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#drawOval" fx:id="oval">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/oval.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw Oval" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#drawArrow" fx:id="arrow">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/arrow.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw arrow" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#drawLine" fx:id="line">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/line.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw line" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#drawCos" fx:id="cos">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/cos.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw sin(cos) line" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <ColorPicker fx:id="colorPicker" styleClass="icon-button" onAction="#colorPicker">
+                <tooltip>
+                    <Tooltip text="select color" styleClass="custom-tooltip"/>
+                </tooltip>
+            </ColorPicker>
+
+            <Slider fx:id="strokeSlider" prefWidth="100" min="1" max="10" showTickLabels="true"
+                    blockIncrement="0.5" majorTickUnit="1" minorTickCount="0">
+            </Slider>
+
+            <Separator/>
+            <ComboBox fx:id="processType" value="选择处理类型">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="锐化"/>
+                        <String fx:value="均值平滑"/>
+                        <String fx:value="高斯平滑"/>
+                        <String fx:value="分割"/>
+                        <String fx:value="灰化"/>
+                        <String fx:value="边缘提取"/>
+                        <String fx:value="人脸识别"/>
+                    </FXCollections>
+                </items>
+            </ComboBox>
+
+            <Button styleClass="icon-button" onAction="#processImage">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/process.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="process image(choose process type first)" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+            <Separator/>
+
+            <Button styleClass="icon-button" onAction="#undo">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/withdrawal.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="undo" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#redo">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/forward.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="redo" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+        </ToolBar>
+    </top>
+
+    <center>
+        <StackPane>
+            <Canvas fx:id="canvas" />
+        </StackPane>
+    </center>
+</BorderPane>
