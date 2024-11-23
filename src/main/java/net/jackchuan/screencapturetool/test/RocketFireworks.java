@@ -20,6 +20,7 @@ public class RocketFireworks extends Application {
     private List<Rocket> rockets = new ArrayList<>();
     private List<Particle> particles = new ArrayList<>();
     private List<SmallHeart> smallHearts = new ArrayList<>();
+    private String[] lines = {"", ""};
 
     @Override
     public void start(Stage primaryStage) {
@@ -29,31 +30,40 @@ public class RocketFireworks extends Application {
         AnimationTimer timer = new AnimationTimer() {
             private long lastRocketTime = 0;
             private long lastSmallHeartTime = 0;
+            private long startTime = -1;
 
             @Override
             public void handle(long now) {
+                if (startTime == -1) {
+                    startTime = now;
+                }
+                double seconds = (now - startTime) / 1_000_000_000.0;
                 // 清屏（仅清除动态部分）
                 gc.setFill(Color.BLACK);
                 gc.fillRect(0, 0, WIDTH, HEIGHT);
 
                 // 始终绘制主心形
-                drawHeart(gc, WIDTH / 2.0, HEIGHT / 2.0, 10, Color.RED);
+                drawHeart(gc, WIDTH / 2.0, HEIGHT / 2.0, 10, Color.RED, seconds);
 
                 // 发射火箭
-                if (now - lastRocketTime > 1_000_000_000) { // 每秒发射一次
+                if (seconds > 3 && now - lastRocketTime > 1_000_000_000) { // 每秒发射一次
                     spawnRockets();
                     lastRocketTime = now;
+                    spawnRockets();
                 }
 
                 // 随机生成小心形
-                if (now - lastSmallHeartTime > 500_000_000L) { // 每隔0.5秒生成一个小心形
-                    spawnSmallHeart();
+                if (seconds > 3 && now - lastSmallHeartTime > 500_000_000L) { // 每隔0.5秒生成一个小心形
+                    spawnSmallHeart(now);
                     lastSmallHeartTime = now;
                 }
 
                 // 更新火箭和粒子
                 updateRockets(gc);
                 updateParticles(gc);
+                if(((now - startTime) / 1_000_000_000.0)%2==0){
+                    checkRender();
+                }
 
                 // 更新小心形
                 updateSmallHearts(gc, now);
@@ -69,43 +79,68 @@ public class RocketFireworks extends Application {
         primaryStage.show();
     }
 
-    private void drawHeart(GraphicsContext gc, double centerX, double centerY, double scale, Color color) {
+    private void checkRender() {
+        for(Rocket rocket:rockets){
+            if(!rocket.isShouldRender()&&Math.random()<=0.6){
+                rocket.setShouldRender(true);
+            }
+        }
+    }
+
+    private void drawHeart(GraphicsContext gc, double centerX, double centerY, double scale, Color color, double seconds) {
         gc.setStroke(color);
         gc.setLineWidth(2);
         gc.beginPath();
-        for (double t = 0; t <= 2 * Math.PI; t += 0.01) {
-            double x = 16 * Math.pow(Math.sin(t), 3);
-            double y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-            double px = centerX + x * scale;
-            double py = centerY - y * scale;
-            if (t == 0) {
-                gc.moveTo(px, py);
-            } else {
-                gc.lineTo(px, py);
+        if (seconds <= 3) {
+            double t1 = seconds / 3f * 2 * Math.PI;
+            for (double t = 0; t <= t1; t += 0.01) {
+                double x = 16 * Math.pow(Math.sin(t), 3);
+                double y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+                double px = centerX + x * scale;
+                double py = centerY - y * scale;
+                if (t == 0) {
+                    gc.moveTo(px, py);
+                } else {
+                    gc.lineTo(px, py);
+                }
+            }
+        } else {
+            for (double t = 0; t <= 2 * Math.PI; t += 0.01) {
+                double x = 16 * Math.pow(Math.sin(t), 3);
+                double y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+                double px = centerX + x * scale;
+                double py = centerY - y * scale;
+                if (t == 0) {
+                    gc.moveTo(px, py);
+                } else {
+                    gc.lineTo(px, py);
+                }
             }
         }
+
         gc.stroke();
     }
 
     private void spawnRockets() {
         Random random = new Random();
-        int numRockets = 3; // 每次生成 3 个火箭
+        int numRockets = random.nextInt(10); // 每次生成 3 个火箭
         for (int i = 0; i < numRockets; i++) {
             double x = random.nextDouble() * WIDTH;
-            double targetY = HEIGHT / 3.0 + random.nextDouble() * (HEIGHT / 6.0);
-            rockets.add(new Rocket(x, HEIGHT, targetY, Color.WHITE));
+            double targetY = HEIGHT / 3.0 + (2 * random.nextDouble() - 1) * (HEIGHT / 100.0);
+            rockets.add(new Rocket(x, HEIGHT, targetY, Color.WHITE, Math.random() <= 0.32f));
         }
     }
 
     private void updateRockets(GraphicsContext gc) {
         List<Rocket> explodedRockets = new ArrayList<>();
         for (Rocket rocket : rockets) {
-            rocket.update();
-            rocket.draw(gc);
-
-            if (rocket.hasExploded()) {
-                explodedRockets.add(rocket);
-                particles.addAll(createFirework(rocket.x, rocket.y));
+            if(rocket.isShouldRender()){
+                rocket.update();
+                rocket.draw(gc);
+                if (rocket.hasExploded()) {
+                    explodedRockets.add(rocket);
+                    particles.addAll(createFirework(rocket.x, rocket.y));
+                }
             }
         }
         rockets.removeAll(explodedRockets);
@@ -115,7 +150,6 @@ public class RocketFireworks extends Application {
         List<Particle> fireworkParticles = new ArrayList<>();
         Random random = new Random();
         int numParticles = 100;
-
         for (int i = 0; i < numParticles; i++) {
             double angle = random.nextDouble() * 2 * Math.PI;
             double speed = 2 + random.nextDouble() * 3;
@@ -124,7 +158,6 @@ public class RocketFireworks extends Application {
             Color color = Color.hsb(random.nextDouble() * 360, 1.0, 1.0);
             fireworkParticles.add(new Particle(centerX, centerY, dx, dy, color));
         }
-
         return fireworkParticles;
     }
 
@@ -136,11 +169,11 @@ public class RocketFireworks extends Application {
         }
     }
 
-    private void spawnSmallHeart() {
+    private void spawnSmallHeart(long now) {
         Random random = new Random();
         double x = random.nextDouble() * WIDTH;
-        double y = random.nextDouble() * HEIGHT / 2;
-        smallHearts.add(new SmallHeart(x, y, 5, System.currentTimeMillis()));
+        double y = random.nextDouble() * HEIGHT;
+        smallHearts.add(new SmallHeart(x, y, 1, now));
     }
 
     private void updateSmallHearts(GraphicsContext gc, long now) {
@@ -162,13 +195,15 @@ public class RocketFireworks extends Application {
     static class Rocket {
         double x, y, targetY;
         Color color;
+        private boolean shouldRender = true;
         private boolean exploded = false;
 
-        public Rocket(double x, double y, double targetY, Color color) {
+        public Rocket(double x, double y, double targetY, Color color, boolean shouldRender) {
             this.x = x;
             this.y = y;
             this.targetY = targetY;
             this.color = color;
+            this.shouldRender = shouldRender;
         }
 
         public void update() {
@@ -188,6 +223,14 @@ public class RocketFireworks extends Application {
 
         public boolean hasExploded() {
             return exploded;
+        }
+
+        public boolean isShouldRender() {
+            return shouldRender;
+        }
+
+        public void setShouldRender(boolean shouldRender) {
+            this.shouldRender = shouldRender;
         }
     }
 

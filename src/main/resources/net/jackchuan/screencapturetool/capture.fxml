@@ -16,7 +16,7 @@
             prefHeight="400.0" prefWidth="600.0">
 
     <top>
-        <ToolBar>
+        <ToolBar fx:id="tools">
             <Button styleClass="icon-button" onAction="#upload">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">

@@ -3,24 +3,26 @@ package net.jackchuan.screencapturetool.controller;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Cursor;
 import javafx.scene.ImageCursor;
+import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.*;
 import javafx.scene.control.Button;
-import javafx.scene.control.ColorPicker;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.ArcType;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
+import net.jackchuan.screencapturetool.util.ControllerInstance;
 import net.jackchuan.screencapturetool.util.ImageFormatHandler;
 import net.jackchuan.screencapturetool.util.TransferableImage;
 import org.opencv.core.*;
@@ -53,19 +55,24 @@ public class CaptureDisplayController {
     @FXML
     private Canvas canvas;
     @FXML
+    private ToolBar tools;
+    @FXML
     private Button drag, pencil, rubber, rect, filledRect, arrow, line, cos,oval;
     private Color forecolor = Color.RED;
     private int type = -2, stroke;
     private double initialX, initialY, startX, startY;
-    private Stage parent;
+    private Stage parent,history;
     private List<WritableImage> drawRecords;
     private Stack<WritableImage> drawRecordsStack;
+    private List<String> editHistory;
     private boolean isAltPressed,isShiftPressed,isCtrlPressed;
+    private EditRecordController editController;
 
     @FXML
     public void initialize() {
         drawRecords = new ArrayList<>();
         drawRecordsStack = new Stack<>();
+        editHistory=new ArrayList<>();
         colorPicker.setBackground(Background.fill(forecolor));
 
         // 初始化时设置 capture 和 canvas
@@ -80,8 +87,13 @@ public class CaptureDisplayController {
                 });
 
                 // 保存初始图像到 drawRecords 中
-                saveCurrentState();
-
+                saveCurrentState("初始化图片(0)");
+                tools.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                    if (event.getCode()==KeyCode.TAB) {
+                        event.consume(); // 阻止默认的焦点切换行为
+                        showEditHistory();
+                    }
+                });
                 parent.getScene().setOnKeyPressed(e->{
                     if(e.getCode()==KeyCode.SHIFT){
                         rubberMode();
@@ -112,11 +124,8 @@ public class CaptureDisplayController {
                     if(e.getCode()== KeyCode.W){
                         drawCos();
                     }
-                    if(e.getCode()== KeyCode.O){
+                    if(e.getCode()== KeyCode.O) {
                         drawOval();
-                    }
-                    if(e.getCode()== KeyCode.TAB){
-                        showEditHistory();
                     }
                     if(e.getCode()== KeyCode.UP){
                         strokeSlider.setValue(strokeSlider.getValue()+0.5);
@@ -155,6 +164,7 @@ public class CaptureDisplayController {
                     if(e.getCode()==KeyCode.CONTROL){
                         isCtrlPressed=false;
                     }
+
                 });
                 // 鼠标拖动和缩放事件
                 canvas.setOnScroll(event -> {
@@ -273,18 +283,74 @@ public class CaptureDisplayController {
                         g2.setLineWidth(strokeSlider.getValue());
                         g2.setStroke(forecolor);
                         drawCos(g2, startX, startY, event.getX(), event.getY(), 5);
+                    }else if (type == 7) {
+                        //绘制圆
+                        g2.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+                        repaintCanvas(drawRecords.getLast());
+                        g2.setLineWidth(strokeSlider.getValue());
+                        g2.setStroke(forecolor);
+                        drawOval(g2, startX, startY, event.getX(), event.getY());
                     }
                 });
 
                 canvas.setOnMouseReleased(event -> {
-                    saveCurrentState();
+                    String editType;
+                    switch (type){
+                        case 0-> editType="图片移动("+drawRecords.size()+")";
+                        case 1-> editType="普通绘画("+drawRecords.size()+")";
+                        case 2-> editType="绘制矩形框("+drawRecords.size()+")";
+                        case 3-> editType="绘制透明填充的矩形框("+drawRecords.size()+")";
+                        case 4-> editType="绘制箭头("+drawRecords.size()+")";
+                        case 5-> editType="绘制直线("+drawRecords.size()+")";
+                        case 6-> editType="绘制波浪线("+drawRecords.size()+")";
+                        case 7-> editType="绘制圆("+drawRecords.size()+")";
+                        default -> editType="未知操作("+drawRecords.size()+")";
+                    }
+                    saveCurrentState(editType);
                 });
             }
+            ControllerInstance.getInstance().setController(this);
         });
     }
 
     private void showEditHistory() {
+        history=new Stage();
+        FXMLLoader loader = new FXMLLoader(ScreenCaptureToolApp.class.getResource("edit_record.fxml"));
+        Scene scene = null;
+        try {
+            scene = new Scene(loader.load());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        // 设置控制器
+        editController = loader.getController();
+        editController.setRecordsList(editHistory);
 
+        // 设置场景并显示窗口
+        Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+        history.setScene(scene);
+        history.setTitle("历史编辑记录");
+        history.setX(size.getWidth()/3);
+        history.setY(size.getHeight()/3);
+        history.setWidth(size.getWidth()*0.4);
+        history.setHeight(size.getHeight()*0.4);
+        history.show();
+    }
+
+    public void drawOval(GraphicsContext g2,double startX,double startY,double endX,double endY){
+        if (startX < endX && startY < endY) {
+            //左上到右下
+            g2.strokeArc(startX,startY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
+        } else if (startX < endX && startY > endY) {
+            //左下到右上
+            g2.strokeArc(startX,endY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
+        } else if (startX > endX && startY < endY) {
+            //右上到左下
+            g2.strokeArc(endX,startY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
+        } else if (startX > endX && startY > endY) {
+            //右下到左上
+            g2.strokeArc(endX,endY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
+        }
     }
 
     private void drawCos(GraphicsContext g2, double startX, double startY, double endX, double endY, int radius) {
@@ -323,10 +389,14 @@ public class CaptureDisplayController {
     }
 
     // 保存当前 Canvas 状态
-    private void saveCurrentState() {
+    public void saveCurrentState(String editType) {
         WritableImage snapshot = canvas.snapshot(null, null);
         drawRecords.add(snapshot);
         drawRecordsStack.push(snapshot);
+        editHistory.add(editType);
+        if(editController!=null){
+            editController.addRecord(editType);
+        }
     }
 
 
@@ -543,7 +613,7 @@ public class CaptureDisplayController {
             Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
             WritableImage image=SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(gray),null);
             drawImageToCanvas(image);
-            saveCurrentState();
+            saveCurrentState("图像灰化处理");
         }else if("锐化".equals(processType.getValue())){
             Mat src = ImageFormatHandler.toMat(canvas.snapshot(null,null));
             Mat sharpenKernel = new Mat(3, 3, CvType.CV_32F);
@@ -553,7 +623,7 @@ public class CaptureDisplayController {
             Imgproc.filter2D(src, sharpenedImage, src.depth(), sharpenKernel);
             WritableImage image=SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(sharpenedImage),null);
             drawImageToCanvas(image);
-            saveCurrentState();
+            saveCurrentState("图像锐化处理");
         }else if("分割".equals(processType.getValue())){
             Mat src = ImageFormatHandler.toMat(canvas.snapshot(null,null));
             Mat mask = new Mat(src.size(), CvType.CV_8UC1, new Scalar(Imgproc.GC_PR_BGD));
@@ -571,14 +641,14 @@ public class CaptureDisplayController {
             src.copyTo(foreground, resultMask);
             WritableImage image=SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(fgModel),null);
             drawImageToCanvas(image);
-            saveCurrentState();
+            saveCurrentState("图像分割处理");
         }else if("边缘提取".equals(processType.getValue())){
             Mat src = ImageFormatHandler.toMat(canvas.snapshot(null,null));
             Mat edges = new Mat();
             Imgproc.Canny(src, edges, 100, 200);
             WritableImage image=SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(edges),null);
             drawImageToCanvas(image);
-            saveCurrentState();
+            saveCurrentState("图像边缘处理");
         }else if("均值平滑".equals(processType.getValue())){
             Mat src = ImageFormatHandler.toMat(canvas.snapshot(null,null));
             Mat meanBlurred = new Mat();
@@ -586,7 +656,7 @@ public class CaptureDisplayController {
             Imgproc.blur(src, meanBlurred, kernelSize);
             WritableImage image=SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(meanBlurred),null);
             drawImageToCanvas(image);
-            saveCurrentState();
+            saveCurrentState("图像均值平滑处理");
         }else if("高斯平滑".equals(processType.getValue())){
             Mat src = ImageFormatHandler.toMat(canvas.snapshot(null,null));
             Mat meanBlurred = new Mat();
@@ -594,7 +664,7 @@ public class CaptureDisplayController {
             Imgproc.GaussianBlur(src, meanBlurred, kernelSize,0);
             WritableImage image=SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(meanBlurred),null);
             drawImageToCanvas(image);
-            saveCurrentState();
+            saveCurrentState("图像高斯平滑处理");
         } else if("人脸识别".equals(processType.getValue())){
             Mat src = ImageFormatHandler.toMat(canvas.snapshot(null,null));
             Mat meanBlurred = new Mat();
@@ -602,7 +672,7 @@ public class CaptureDisplayController {
             Imgproc.blur(src, meanBlurred, kernelSize);
             WritableImage image=SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(meanBlurred),null);
             drawImageToCanvas(image);
-            saveCurrentState();
+            saveCurrentState("人脸识别");
         }
     }
 
@@ -623,5 +693,13 @@ public class CaptureDisplayController {
         type=7;
         enableOthers();
         oval.setDisable(true);
+    }
+    public void jumpTo(int index){
+        if(index>=0 && index<drawRecords.size()){
+            WritableImage image = drawRecords.get(index);
+            drawRecords.add(image);
+            drawRecordsStack.push(image);
+            repaintCanvas(image);
+        }
     }
 }
