@@ -1,0 +1,28 @@
+.childSet {
+    -fx-padding: 4 50;
+    -fx-alignment: CENTER_LEFT;
+}
+.fatherSet{
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0;
+
+}
+/* 修改 ComboBox 的弹出框背景颜色 */
+.combo-box-popup .list-view {
+    -fx-background-color: #E0F7FA; /* 设置背景色，例如浅蓝色 */
+}
+
+/* 修改 ComboBox 的背景颜色 */
+.combo-box {
+    -fx-background-color: #B2EBF2; /* 设置背景色 */
+}
+.captureType{
+    -fx-padding: 0 30;
+}
+.custom-radio{
+    -fx-font-weight: bold;
+    -fx-padding: 0 15;
+}
+.imp-check{
+    -fx-padding: 10 15;
+}

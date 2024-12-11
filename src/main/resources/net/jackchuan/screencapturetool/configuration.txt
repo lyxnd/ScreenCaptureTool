@@ -1,0 +1,28 @@
+ScreenCaptureToolProperties :{
+ isShiftNeeded=true
+ isAltNeeded=false
+ isCtrlNeeded=false
+ captureType=Python's pillow
+ enableAll=true
+ export=true
+ copy=true
+ reset=true
+ clearHistory=true
+ drag=true
+ pencil=true
+ rubber=true
+ rect=true
+ filledRect=true
+ oval=true
+ arrow=true
+ line=true
+ wave=true
+ color=true
+ strokeUp=true
+ strokeDown=true
+ undo=true
+ redo=true
+ captureKey=88
+ defaultPath=true
+ autoCopy=false
+}

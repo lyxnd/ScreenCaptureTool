@@ -1,11 +1,17 @@
 package net.jackchuan.screencapturetool.util;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 /**
  * 功能：
@@ -13,6 +19,63 @@ import java.awt.image.BufferedImage;
  * 日期：2024/11/21 21:05
  */
 public class ImageFormatHandler {
+    //合并两个canvas内容
+    public static WritableImage combineCanvases(Canvas imageCanvas, Canvas drawingCanvas) {
+        // 获取 canvas 的宽度和高度
+        double width = imageCanvas.getWidth();
+        double height = imageCanvas.getHeight();
+
+        // 创建一个 Canvas 用于合并两个 Canvas 的内容
+        Canvas combinedCanvas = new Canvas(width, height);
+        GraphicsContext gc = combinedCanvas.getGraphicsContext2D();
+
+        // 绘制第一个 Canvas（显示图片的 Canvas）到合并 Canvas
+        gc.drawImage(imageCanvas.snapshot(null, null), 0, 0);
+
+        // 绘制第二个 Canvas（绘制内容的 Canvas）到合并 Canvas
+        gc.drawImage(drawingCanvas.snapshot(null, null), 0, 0);
+
+        // 创建一个 WritableImage，用于从合并的 Canvas 获取最终的图像
+        return combinedCanvas.snapshot(null, null);
+    }
+
+    public static BufferedImage fxImageToBufferedImage(Image writableImage){
+        return SwingFXUtils.fromFXImage(writableImage,null);
+    }
+
+    public static Image bufferedToFXImage(BufferedImage screenshot) throws IOException {
+        return SwingFXUtils.toFXImage(screenshot,null);
+    }
+    //awt Image to BufferedImage
+    public static BufferedImage convertToBufferedImage(java.awt.Image image) {
+        // 创建一个与原始 Image 尺寸相同的 BufferedImage
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+        // 获取 Graphics2D 对象来绘制图像
+        Graphics2D g2d = bufferedImage.createGraphics();
+        // 绘制图像到 BufferedImage
+        g2d.drawImage(image, 0, 0, null);
+
+        // 释放资源
+        g2d.dispose();
+
+        return bufferedImage;
+    }
+
+    public static IntegerPair getScaledSize(Image image, double width, double height){
+        double w = image.getWidth();
+        double h = image.getHeight();
+        IntegerPair pair = new IntegerPair();
+        double scale=1;
+        if(width<w||height<h){
+            scale=height/h*0.25;
+        }
+        pair.setW(w*scale);
+        pair.setH(h*scale);
+        return pair;
+    }
+
+
     public static Mat toMat(Image image) {
         int width = (int) image.getWidth();
         int height = (int) image.getHeight();

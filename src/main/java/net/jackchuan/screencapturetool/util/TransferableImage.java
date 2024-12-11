@@ -1,7 +1,5 @@
 package net.jackchuan.screencapturetool.util;
-
-import javafx.scene.image.Image;
-
+import javafx.embed.swing.SwingFXUtils;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -12,10 +10,10 @@ import java.awt.datatransfer.UnsupportedFlavorException;
  * 日期：2024/11/21 22:35
  */
 public class TransferableImage implements Transferable {
-    private Image image;
+    private java.awt.Image image;
 
-    public TransferableImage(Image image) {
-        this.image = image;
+    public TransferableImage(javafx.scene.image.Image image) {
+        this.image = SwingFXUtils.fromFXImage(image,null);
     }
 
     @Override

@@ -6,46 +6,48 @@ package net.jackchuan.screencapturetool.test;
  * 日期：2024/11/22 13:01
  */
 
-import com.sun.jna.platform.win32.GDI32Util;
-import com.sun.jna.platform.win32.WinDef;
+import javafx.application.Application;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import javafx.scene.robot.Robot;
+import javafx.stage.Stage;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.MultiResolutionImage;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.imageio.ImageIO;
+public class Main extends Application {
+    @Override
+    public void start(Stage primaryStage) {
+        // UI组件
+        Button captureButton = new Button("截取屏幕");
+        ImageView imageView = new ImageView();
 
-public class Main {
+        // 设置按钮点击事件
+        captureButton.setOnAction(event -> {
+            // 定义截取区域（屏幕左上角 100x100 到 400x400 区域）
+            Rectangle2D screenRegion = new Rectangle2D(0, 0, 1280, 800);
+            primaryStage.setWidth(1200);
+            primaryStage.setHeight(1000);
+            // 使用 Robot 截取屏幕
+            Robot robot = new Robot();
+            Image screenshot = robot.getScreenCapture(null, screenRegion);
+
+            // 将截图显示到 ImageView 中
+            imageView.setImage(screenshot);
+        });
+
+        // 布局设置
+        VBox root = new VBox(10, captureButton, imageView);
+        Scene scene = new Scene(root, 500, 500);
+
+        // 设置舞台
+        primaryStage.setTitle("屏幕区域截图");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
 
     public static void main(String[] args) {
-        try {
-            //Get JNA User32 Instace
-            com.sun.jna.platform.win32.User32 user32 = com.sun.jna.platform.win32.User32.INSTANCE;
-            //Get desktop windows handler
-            WinDef.HWND hwnd = user32.GetDesktopWindow();
-            //Create a BufferedImage
-            BufferedImage bi;
-            //Function that take screenshot and set to BufferedImage bi
-            bi = GDI32Util.getScreenshot(hwnd);
-            //Save screenshot to a file
-            ImageIO.write(getHighResolutionImage(), "png", new java.io.File("screenshot1.png"));
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (AWTException e) {
-            throw new RuntimeException(e);
-        }
+        launch(args);
     }
-
-    public static BufferedImage getHighResolutionImage() throws AWTException {
-        Robot robot = new Robot();
-        Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
-        MultiResolutionImage multiResolutionImage = robot.createMultiResolutionScreenCapture(new Rectangle(0, 0,
-                (int) size.getWidth(), (int) size.getHeight()));
-        Image image = multiResolutionImage.getResolutionVariant((int) size.getWidth(), (int) size.getHeight());
-        BufferedImage screenCapture = (BufferedImage) image;
-        return screenCapture;
-    }
-
 }

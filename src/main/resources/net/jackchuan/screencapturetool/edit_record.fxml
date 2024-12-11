@@ -14,7 +14,9 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="net.jackchuan.screencapturetool.controller.EditRecordController"
             prefHeight="400.0" prefWidth="600.0">
-    <VBox fx:id="records">
+    <ScrollPane>
+        <VBox fx:id="records">
 
-    </VBox>
+        </VBox>
+    </ScrollPane>
 </AnchorPane>

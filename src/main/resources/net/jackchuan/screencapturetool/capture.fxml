@@ -49,7 +49,28 @@
                     <Tooltip text="Save to cut board" styleClass="custom-tooltip"/>
                 </tooltip>
             </Button>
+            <Separator/>
+            <Button styleClass="icon-button" onAction="#undo">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/withdrawal.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="undo" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
 
+            <Button styleClass="icon-button" onAction="#redo">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/forward.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="redo" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
             <Separator/>
             <Button styleClass="icon-button" onAction="#resetImage">
                 <graphic>
@@ -181,6 +202,29 @@
             <Slider fx:id="strokeSlider" prefWidth="100" min="1" max="10" showTickLabels="true"
                     blockIncrement="0.5" majorTickUnit="1" minorTickCount="0">
             </Slider>
+            <Separator/>
+
+            <Button styleClass="icon-button" onAction="#addImage" fx:id="addImage">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/addImage.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="add image" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
+            <Button styleClass="icon-button" onAction="#addText" fx:id="addText">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/addText.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="add text" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
 
             <Separator/>
             <ComboBox fx:id="processType" value="选择处理类型">
@@ -209,25 +253,24 @@
             </Button>
             <Separator/>
 
-            <Button styleClass="icon-button" onAction="#undo">
+            <Button styleClass="icon-button" onAction="#openSettingStage" >
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/withdrawal.png"/>
+                        <Image url="@../screencapturetool/assets/icon/setting.png"/>
                     </ImageView>
                 </graphic>
                 <tooltip>
-                    <Tooltip text="undo" styleClass="custom-tooltip"/>
+                    <Tooltip text="open setting stage" styleClass="custom-tooltip"/>
                 </tooltip>
             </Button>
-
-            <Button styleClass="icon-button" onAction="#redo">
+            <Button styleClass="icon-button" onAction="#completelyExit" >
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/forward.png"/>
+                        <Image url="@../screencapturetool/assets/icon/close.png"/>
                     </ImageView>
                 </graphic>
                 <tooltip>
-                    <Tooltip text="redo" styleClass="custom-tooltip"/>
+                    <Tooltip text="completely close the window and program!" styleClass="custom-tooltip"/>
                 </tooltip>
             </Button>
         </ToolBar>
@@ -236,6 +279,13 @@
     <center>
         <StackPane>
             <Canvas fx:id="canvas" />
+            <Canvas fx:id="editArea"
         </StackPane>
     </center>
+    <bottom>
+        <HBox>
+            <Label fx:id="state" style="-fx-font-weight: bold;-fx-text-fill: blue;"/>
+            <Button text="test" onAction="#adjustScale"/>
+        </HBox>
+    </bottom>
 </BorderPane>

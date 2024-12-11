@@ -28,6 +28,8 @@ public class EditRecordController {
     private void initialize() {
         Platform.runLater(() -> {
             self= (Stage) records.getScene().getWindow();
+            records.setPrefWidth(self.getWidth());
+            records.setPrefHeight(self.getHeight());
             records.getScene().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
                 if (event.getCode()== KeyCode.TAB) {
                     event.consume(); // 阻止默认的焦点切换行为
@@ -42,17 +44,24 @@ public class EditRecordController {
             });
 
             for (String str : recordsList) {
-                Button btn = new Button(str);
-                btn.setOnAction(e -> {
-                    String str1=e.getSource().toString().split("'")[1];
-                    int a = str1.indexOf("(");
-                    int index= Integer.parseInt(str1.substring(a+1,str1.length()-1));
-                    ControllerInstance.getInstance().getController().jumpTo(index);
-                    ControllerInstance.getInstance().getController().saveCurrentState("jump edit("+recordsList.size()+")");
-                });
+                Button btn = createButton(str);
                 records.getChildren().add(btn);
             }
         });
+    }
+
+    private Button createButton(String str) {
+        Button btn = new Button(str);
+        btn.setPrefWidth(self.getWidth());
+        btn.setPrefHeight(30);
+        btn.setOnAction(e -> {
+            String str1=e.getSource().toString().split("'")[1];
+            int a = str1.indexOf("(");
+            int index= Integer.parseInt(str1.substring(a+1,str1.length()-1));
+            ControllerInstance.getInstance().getController().jumpTo(index);
+            ControllerInstance.getInstance().getController().saveCurrentState("jump edit("+recordsList.size()+")");
+        });
+        return btn;
     }
 
 
@@ -63,14 +72,7 @@ public class EditRecordController {
 
     public void addRecord(String editType) {
         recordsList.add(editType);
-        Button btn = new Button(editType);
-        btn.setOnAction(e -> {
-            String str1=e.getSource().toString().split("'")[1];
-            int a = str1.indexOf("(");
-            int index= Integer.parseInt(str1.substring(a+1,str1.length()-1));
-            ControllerInstance.getInstance().getController().jumpTo(index);
-            ControllerInstance.getInstance().getController().saveCurrentState("jump edit("+recordsList.size()+")");
-        });
+        Button btn = createButton(editType);
         records.getChildren().add(btn);
     }
 }

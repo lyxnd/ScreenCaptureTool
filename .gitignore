@@ -20,7 +20,7 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
+/temp
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -31,8 +31,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 src/main/resources/net/jackchuan/screencapturetool/lib
+src/main/java/net/jackchuan/screencapturetool/test
 ### VS Code ###
 .vscode/
-
+lib
 ### Mac OS ###
 .DS_Store
