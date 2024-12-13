@@ -179,6 +179,15 @@ public class CaptureProperties {
             case "autoSelect"->{
                 autoSelect= Boolean.parseBoolean(value);
             }
+            case "isShiftNeeded"->{
+                isShiftNeeded= Boolean.parseBoolean(value);
+            }
+            case "isAltNeeded"->{
+                isAltNeeded= Boolean.parseBoolean(value);
+            }
+            case "isCtrlNeeded"->{
+                isCtrlNeeded= Boolean.parseBoolean(value);
+            }
         }
 
     }

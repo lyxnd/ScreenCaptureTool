@@ -11,6 +11,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import net.jackchuan.screencapturetool.util.ControllerInstance;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ public class EditRecordController {
 
     @FXML
     private VBox records;
-    private List<String> recordsList;
+    private List<String> recordsList=new ArrayList<>();
     private Stage self;
     @FXML
     private void initialize() {
@@ -59,7 +60,7 @@ public class EditRecordController {
             int a = str1.indexOf("(");
             int index= Integer.parseInt(str1.substring(a+1,str1.length()-1));
             ControllerInstance.getInstance().getController().jumpTo(index);
-            ControllerInstance.getInstance().getController().saveCurrentState("jump edit("+recordsList.size()+")");
+            ControllerInstance.getInstance().getController().saveCurrentState("jump edit("+recordsList.size()+")",false);
         });
         return btn;
     }
@@ -74,5 +75,10 @@ public class EditRecordController {
         recordsList.add(editType);
         Button btn = createButton(editType);
         records.getChildren().add(btn);
+    }
+
+    public void clearAllRecords() {
+        recordsList.clear();
+        records.getChildren().clear();
     }
 }

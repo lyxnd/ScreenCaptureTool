@@ -21,15 +21,7 @@ public enum DrawType implements DrawingAction {
         public void draw(GraphicsContext gc, double startX, double startY, double currentX, double currentY) {
             double width = Math.abs(currentX - startX);
             double height = Math.abs(currentY - startY);
-            if (startX < currentX && startY < currentY) {
-                gc.strokeRect(startX, startY, width, height);
-            } else if (startX < currentX && startY > currentY) {
-                gc.strokeRect(startX, currentY, width, height);
-            } else if (startX > currentX && startY < currentY) {
-                gc.strokeRect(currentX, startY, width, height);
-            } else if (startX > currentX && startY > currentY) {
-                gc.strokeRect(currentX, currentY, width, height);
-            }
+            gc.strokeRect(Math.min(startX,currentX), Math.min(startY,currentY),width,height);
         }
         @Override
         public void draw(GraphicsContext gc, double startX, double startY, double endX, double endY, Color foreColor) {
@@ -44,27 +36,10 @@ public enum DrawType implements DrawingAction {
         public void draw(GraphicsContext gc, double startX, double startY, double currentX, double currentY,Color forecolor) {
             double width = Math.abs(currentX - startX);
             double height = Math.abs(currentY - startY);
-            if (startX < currentX && startY < currentY) {
-                gc.strokeRect(startX, startY, width, height);
-                gc.setFill(Color.rgb((int) (forecolor.getRed() * 255), ((int) forecolor.getGreen() * 255),
-                        (int) (forecolor.getBlue() * 255), 0.05));
-                gc.fillRect(startX, startY, width, height);
-            } else if (startX < currentX && startY > currentY) {
-                gc.strokeRect(startX, currentY, width, height);
-                gc.setFill(Color.rgb((int) (forecolor.getRed() * 255), ((int) forecolor.getGreen() * 255),
-                        (int) (forecolor.getBlue() * 255), 0.05));
-                gc.fillRect(startX, currentY, width, height);
-            } else if (startX > currentX && startY < currentY) {
-                gc.strokeRect(currentX, startY, width, height);
-                gc.setFill(Color.rgb((int) (forecolor.getRed() * 255), ((int) forecolor.getGreen() * 255),
-                        (int) (forecolor.getBlue() * 255), 0.05));
-                gc.fillRect(currentX, startY, width, height);
-            } else if (startX > currentX && startY > currentY) {
-                gc.strokeRect(currentX, currentY, width, height);
-                gc.setFill(Color.rgb((int) (forecolor.getRed() * 255), ((int) forecolor.getGreen() * 255),
-                        (int) (forecolor.getBlue() * 255), 0.05));
-                gc.fillRect(currentX, currentY, width, height);
-            }
+            gc.strokeRect(Math.min(startX,currentX), Math.min(startY,currentY),width,height);
+            gc.setFill(Color.rgb((int) (forecolor.getRed() * 255), ((int) forecolor.getGreen() * 255),
+                    (int) (forecolor.getBlue() * 255), 0.05));
+            gc.fillRect(Math.min(startX,currentX), Math.min(startY,currentY),width,height);
         }
     },
     ARROW{
@@ -119,19 +94,8 @@ public enum DrawType implements DrawingAction {
     CIRCLE{
         @Override
         public void draw(GraphicsContext g2, double startX, double startY, double endX, double endY) {
-            if (startX < endX && startY < endY) {
-                //左上到右下
-                g2.strokeArc(startX,startY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
-            } else if (startX < endX && startY > endY) {
-                //左下到右上
-                g2.strokeArc(startX,endY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
-            } else if (startX > endX && startY < endY) {
-                //右上到左下
-                g2.strokeArc(endX,startY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
-            } else if (startX > endX && startY > endY) {
-                //右下到左上
-                g2.strokeArc(endX,endY,Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
-            }
+            g2.strokeArc(Math.min(startX,endX),Math.min(startY,endY),
+                    Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
         }
         @Override
         public void draw(GraphicsContext gc, double startX, double startY, double endX, double endY, Color foreColor) {
@@ -146,7 +110,12 @@ public enum DrawType implements DrawingAction {
 
         @Override
         public void draw(GraphicsContext gc, double startX, double startY, double endX, double endY, Color foreColor) {
-
+            gc.strokeArc(Math.min(startX,endX),Math.min(startY,endY),
+                    Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
+            gc.setFill(Color.rgb((int) (foreColor.getRed() * 255), ((int) foreColor.getGreen() * 255),
+                    (int) (foreColor.getBlue() * 255), 0.05));
+            gc.fillArc(Math.min(startX,endX),Math.min(startY,endY),
+                    Math.abs(startX-endX),Math.abs(startY-endY),0,360,ArcType.OPEN);
         }
     },
 

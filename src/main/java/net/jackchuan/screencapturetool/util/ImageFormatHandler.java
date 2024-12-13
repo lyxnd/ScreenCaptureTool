@@ -7,6 +7,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import java.awt.*;
@@ -19,6 +20,7 @@ import java.io.IOException;
  * 日期：2024/11/21 21:05
  */
 public class ImageFormatHandler {
+
     //合并两个canvas内容
     public static WritableImage combineCanvases(Canvas imageCanvas, Canvas drawingCanvas) {
         // 获取 canvas 的宽度和高度
@@ -37,6 +39,13 @@ public class ImageFormatHandler {
 
         // 创建一个 WritableImage，用于从合并的 Canvas 获取最终的图像
         return combinedCanvas.snapshot(null, null);
+    }
+
+    public static WritableImage getTransparentImage(Canvas editArea){
+        Image image = new Image(ScreenCaptureToolApp.class.getResource("assets/transparent.png").toExternalForm());
+        // 将 Image 转换为 WritableImage
+        WritableImage writableImage = new WritableImage(image.getPixelReader(),(int) image.getWidth(), (int) image.getHeight());
+        return writableImage;
     }
 
     public static BufferedImage fxImageToBufferedImage(Image writableImage){

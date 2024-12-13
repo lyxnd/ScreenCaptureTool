@@ -16,15 +16,40 @@ import java.util.List;
 public class ExternalImageHandler {
     private final List<DrawableImage> images = new ArrayList<>();
     private Canvas canvas;
-    public ExternalImageHandler(Canvas canvas){
+    private Canvas outerCanvas;
+    public ExternalImageHandler(Canvas canvas,Canvas outerCanvas){
         this.canvas=canvas;
+        this.outerCanvas=outerCanvas;
     }
-    public void drawAllImages(GraphicsContext gc, DrawableImage selectedImage) {
+    public void drawAllImages(GraphicsContext gc) {
         for (DrawableImage image : images) {
-            gc.drawImage(image.image, image.x, image.y, image.width, image.height);
-            if(image.equals(selectedImage)){
-                drawBorder(gc, image);
+            if(image.shouldRenderBorder()){
+                drawBorder(outerCanvas.getGraphicsContext2D(), image);
             }
+            if(image.shouldRender()){
+                gc.drawImage(image.image,image.x, image.y,  image.width, image.height);
+                gc.setLineWidth(1);
+                gc.strokeText("绘制在editArea上",image.x, image.y-20);
+            }else {
+                outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
+                outerCanvas.getGraphicsContext2D().setLineWidth(1);
+                outerCanvas.getGraphicsContext2D().strokeText("绘制在animator上",image.x, image.y-20);
+            }
+        }
+    }
+
+    public void updateImage(GraphicsContext gc,DrawableImage image){
+        if(image.shouldRenderBorder()){
+            drawBorder(outerCanvas.getGraphicsContext2D(), image);
+        }
+        if(image.shouldRender()){
+            gc.drawImage(image.image,image.x, image.y,  image.width, image.height);
+            gc.setLineWidth(1);
+            gc.strokeText("绘制在editArea上",image.x, image.y-20);
+        }else {
+            outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
+            outerCanvas.getGraphicsContext2D().setLineWidth(1);
+            outerCanvas.getGraphicsContext2D().strokeText("绘制在animator上",image.x, image.y-20);
         }
     }
 
@@ -57,13 +82,15 @@ public class ExternalImageHandler {
 
     public void clearAll() {
         images.clear();
-        drawAllImages(canvas.getGraphicsContext2D(),null);
+        drawAllImages(canvas.getGraphicsContext2D());
     }
 
     public static class DrawableImage {
         private Image image;
         double x, y, width, height;
+        double oriX,oriY;
         private String name;
+        private boolean shouldRender,renderBorder;
         public DrawableImage(Image image, double x, double y, double width, double height,String name) {
             this.image = image;
             this.x = x;
@@ -75,6 +102,22 @@ public class ExternalImageHandler {
 
         public boolean isInside(double mouseX, double mouseY) {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+        }
+
+        public void setOriX(double oriX) {
+            this.oriX = oriX;
+        }
+
+        public void setOriY(double oriY) {
+            this.oriY = oriY;
+        }
+
+        public double getOriX() {
+            return oriX;
+        }
+
+        public double getOriY() {
+            return oriY;
         }
 
         public void setY(double y) {
@@ -112,8 +155,26 @@ public class ExternalImageHandler {
             return name;
         }
 
+        public Image getImage() {
+            return image;
+        }
+
         public void setName(String name) {
             this.name = name;
+        }
+        public boolean shouldRender() {
+            return shouldRender;
+        }
+        public void setShouldRender(boolean shouldRender) {
+            this.shouldRender = shouldRender;
+        }
+
+        public void setRenderBorder(boolean renderBorder) {
+            this.renderBorder = renderBorder;
+        }
+
+        public boolean shouldRenderBorder() {
+            return renderBorder;
         }
 
         @Override
@@ -123,7 +184,6 @@ public class ExternalImageHandler {
             }else {
                 return false;
             }
-
         }
     }
 

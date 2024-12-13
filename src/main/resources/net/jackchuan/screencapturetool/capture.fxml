@@ -160,6 +160,17 @@
                 </tooltip>
             </Button>
 
+            <Button styleClass="icon-button" onAction="#drawFilledOval" fx:id="filledOval">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/filledCircle.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="draw filled Oval with lightly transparency" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
             <Button styleClass="icon-button" onAction="#drawArrow" fx:id="arrow">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
@@ -277,15 +288,15 @@
     </top>
 
     <center>
-        <StackPane>
+        <StackPane fx:id="stackPane">
             <Canvas fx:id="canvas" />
-            <Canvas fx:id="editArea"
         </StackPane>
     </center>
     <bottom>
-        <HBox>
+        <HBox alignment="CENTER">
             <Label fx:id="state" style="-fx-font-weight: bold;-fx-text-fill: blue;"/>
             <Button text="test" onAction="#adjustScale"/>
+            <Button text="test1" onAction="#test1"/>
         </HBox>
     </bottom>
 </BorderPane>
