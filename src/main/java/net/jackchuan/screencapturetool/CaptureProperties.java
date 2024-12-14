@@ -40,6 +40,7 @@ public class CaptureProperties {
     public static boolean autoCopy;
     public static boolean autoSelect;
     public static String configPath;
+    public static String selectPath;
     public static double scale;
 
     static {
@@ -188,18 +189,63 @@ public class CaptureProperties {
             case "isCtrlNeeded"->{
                 isCtrlNeeded= Boolean.parseBoolean(value);
             }
+            case "selectPath"->{
+                selectPath= value;
+            }
         }
 
     }
 
+    public static void updateSelectPath(String path){
+        selectPath=path;
+        File f=new File(configPath);
+        f.setWritable(true);
+        try (FileWriter writer1 = new FileWriter(f)) {
+            writer1.write(toConfigString());
+            f.setWritable(false);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void checkFile() throws IOException {
         File file=new File(System.getProperty("user.home")+"/captureToolConfig.txt");
-        System.out.println("check file:\t"+file.getAbsolutePath());
         if(!file.exists()){
             file.createNewFile();
             try(FileWriter writer=new FileWriter(file)){
                 writer.write("configuration.txt");
             }
         }
+    }
+    public static String toConfigString() {
+        return "ScreenCaptureToolProperties :{" +
+                "\n isShiftNeeded=" + isShiftNeeded +
+                "\n isAltNeeded=" + isAltNeeded +
+                "\n isCtrlNeeded=" + isCtrlNeeded +
+                "\n captureType=" + captureType +
+                "\n enableAll=" + enableAll +
+                "\n export=" + export +
+                "\n copy=" + copy +
+                "\n reset=" + reset +
+                "\n clearHistory=" + clearHistory +
+                "\n drag=" + drag +
+                "\n pencil=" + pencil +
+                "\n rubber=" + rubber +
+                "\n rect=" + rect +
+                "\n filledRect=" + filledRect +
+                "\n oval=" + oval +
+                "\n arrow=" + arrow +
+                "\n line=" + line +
+                "\n wave=" + wave +
+                "\n color=" + color +
+                "\n strokeUp=" + strokeUp +
+                "\n strokeDown=" + strokeDown +
+                "\n undo=" + undo +
+                "\n redo=" + redo +
+                "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
+                "\n autoCopy=" + autoCopy +
+                "\n autoSelect=" + autoSelect +
+                "\n selectPath=" + selectPath +
+                "\n}";
     }
 }

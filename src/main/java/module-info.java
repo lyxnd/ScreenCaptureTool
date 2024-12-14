@@ -6,6 +6,7 @@ module net.jackchuan.screencapturetool {
     requires org.bytedeco.opencv;
     requires javafx.swing;
     requires java.compiler;
+    requires java.sql;
 
     opens net.jackchuan.screencapturetool to javafx.fxml;
     opens net.jackchuan.screencapturetool.controller to javafx.fxml;

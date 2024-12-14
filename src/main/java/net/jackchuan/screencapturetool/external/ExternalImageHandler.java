@@ -28,12 +28,8 @@ public class ExternalImageHandler {
             }
             if(image.shouldRender()){
                 gc.drawImage(image.image,image.x, image.y,  image.width, image.height);
-                gc.setLineWidth(1);
-                gc.strokeText("绘制在editArea上",image.x, image.y-20);
             }else {
                 outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
-                outerCanvas.getGraphicsContext2D().setLineWidth(1);
-                outerCanvas.getGraphicsContext2D().strokeText("绘制在animator上",image.x, image.y-20);
             }
         }
     }
@@ -44,12 +40,9 @@ public class ExternalImageHandler {
         }
         if(image.shouldRender()){
             gc.drawImage(image.image,image.x, image.y,  image.width, image.height);
-            gc.setLineWidth(1);
-            gc.strokeText("绘制在editArea上",image.x, image.y-20);
+
         }else {
             outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
-            outerCanvas.getGraphicsContext2D().setLineWidth(1);
-            outerCanvas.getGraphicsContext2D().strokeText("绘制在animator上",image.x, image.y-20);
         }
     }
 
@@ -75,9 +68,7 @@ public class ExternalImageHandler {
     }
 
     public void removeExternalImage(DrawableImage image) {
-        System.out.println("before remove external image size :"+images.size());
         images.remove(image);
-        System.out.println("after remove external image size :"+images.size());
     }
 
     public void clearAll() {
@@ -85,10 +76,10 @@ public class ExternalImageHandler {
         drawAllImages(canvas.getGraphicsContext2D());
     }
 
-    public static class DrawableImage {
+    public static class DrawableImage implements Cloneable{
         private Image image;
         double x, y, width, height;
-        double oriX,oriY;
+        double oriX,oriY,oriWidth,oriHeight;
         private String name;
         private boolean shouldRender,renderBorder;
         public DrawableImage(Image image, double x, double y, double width, double height,String name) {
@@ -98,6 +89,22 @@ public class ExternalImageHandler {
             this.width = width;
             this.height = height;
             this.name=name;
+        }
+
+        @Override
+        public DrawableImage clone() throws CloneNotSupportedException {
+            DrawableImage cloned = (DrawableImage) super.clone();
+            cloned.setX(getX());
+            cloned.setY(getY());
+            cloned.setWidth(getWidth());
+            cloned.setHeight(getHeight());
+            cloned.setShouldRender(shouldRender());
+            cloned.setRenderBorder(shouldRenderBorder());
+            cloned.setOriX(getOriX());
+            cloned.setOriY(getOriY());
+            cloned.setOriHeight(getOriHeight());
+            cloned.setOriWidth(getOriWidth());
+            return cloned;
         }
 
         public boolean isInside(double mouseX, double mouseY) {
@@ -118,6 +125,22 @@ public class ExternalImageHandler {
 
         public double getOriY() {
             return oriY;
+        }
+
+        public double getOriHeight() {
+            return oriHeight;
+        }
+
+        public double getOriWidth() {
+            return oriWidth;
+        }
+
+        public void setOriHeight(double oriHeight) {
+            this.oriHeight = oriHeight;
+        }
+
+        public void setOriWidth(double oriWidth) {
+            this.oriWidth = oriWidth;
         }
 
         public void setY(double y) {

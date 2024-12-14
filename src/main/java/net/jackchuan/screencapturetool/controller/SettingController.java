@@ -240,7 +240,7 @@ public class SettingController {
     private void saveAsFile() {
         // save settings to file here
         FileChooser chooser = new FileChooser();
-        chooser.setInitialDirectory(new File("D:/"));
+        chooser.setInitialDirectory(new File(CaptureProperties.selectPath));
         chooser.setInitialFileName("config.txt");
         chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("文本文件", ".txt"));
         chooser.setTitle("Save configurations as file");
@@ -295,6 +295,7 @@ public class SettingController {
                 "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
                 "\n autoCopy=" + autoCopy.isSelected() +
                 "\n autoSelect=" + autoSelect.isSelected() +
+                "\n selectPath=" + CaptureProperties.selectPath +
                 "\n}";
     }
 
