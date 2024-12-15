@@ -51,7 +51,7 @@ public class ScreenCaptureToolApp extends Application {
     private ContextMenu popMenu;
     private MenuItem fullCut,test,test1;
     @Override
-    public void start(Stage stage) throws FileNotFoundException {
+    public void start(Stage stage) throws IOException {
         // 隐藏主窗口
         Platform.setImplicitExit(false);
         LibraryLoader.loadOpenCVLibrary();

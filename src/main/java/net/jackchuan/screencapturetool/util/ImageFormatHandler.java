@@ -25,30 +25,6 @@ import java.io.IOException;
  */
 public class ImageFormatHandler {
 
-
-
-    //合并两个canvas内容
-    public static Canvas combineCanvases(WritableImage image1, WritableImage image2) {
-        // 获取 canvas 的宽度和高度
-        File file = new File("E:/t1.png");
-        try {
-            ImageIO.write(SwingFXUtils.fromFXImage(image2, null), "png", file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        double width = image1.getWidth();
-        double height = image1.getHeight();
-        // 创建一个 Canvas 用于合并两个 Canvas 的内容
-        Canvas combinedCanvas = new Canvas(width, height);
-        GraphicsContext gc = combinedCanvas.getGraphicsContext2D();
-        // 绘制第一个 Canvas（显示图片的 Canvas）到合并 Canvas
-        gc.drawImage(image1, 0, 0);
-        // 绘制第二个 Canvas（绘制内容的 Canvas）到合并 Canvas
-        gc.drawImage(image2, 0, 0);
-        // 创建一个 WritableImage，用于从合并的 Canvas 获取最终的图像
-        return combinedCanvas;
-    }
-
     public static WritableImage getTransparentImage(Canvas editArea) {
         Image image = new Image(ScreenCaptureToolApp.class.getResource("assets/transparent.png").toExternalForm());
         // 将 Image 转换为 WritableImage

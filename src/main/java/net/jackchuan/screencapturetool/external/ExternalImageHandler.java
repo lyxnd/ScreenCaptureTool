@@ -38,12 +38,7 @@ public class ExternalImageHandler {
         if(image.shouldRenderBorder()){
             drawBorder(outerCanvas.getGraphicsContext2D(), image);
         }
-        if(image.shouldRender()){
-            gc.drawImage(image.image,image.x, image.y,  image.width, image.height);
-
-        }else {
-            outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
-        }
+        outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
     }
 
     private void drawBorder(GraphicsContext gc, DrawableImage image) {
@@ -79,7 +74,7 @@ public class ExternalImageHandler {
     public static class DrawableImage implements Cloneable{
         private Image image;
         double x, y, width, height;
-        double oriX,oriY,oriWidth,oriHeight;
+        double oriX, oriY;
         private String name;
         private boolean shouldRender,renderBorder;
         public DrawableImage(Image image, double x, double y, double width, double height,String name) {
@@ -100,10 +95,6 @@ public class ExternalImageHandler {
             cloned.setHeight(getHeight());
             cloned.setShouldRender(shouldRender());
             cloned.setRenderBorder(shouldRenderBorder());
-            cloned.setOriX(getOriX());
-            cloned.setOriY(getOriY());
-            cloned.setOriHeight(getOriHeight());
-            cloned.setOriWidth(getOriWidth());
             return cloned;
         }
 
@@ -111,36 +102,20 @@ public class ExternalImageHandler {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
 
-        public void setOriX(double oriX) {
-            this.oriX = oriX;
-        }
-
-        public void setOriY(double oriY) {
-            this.oriY = oriY;
+        public double getOriY() {
+            return oriY;
         }
 
         public double getOriX() {
             return oriX;
         }
 
-        public double getOriY() {
-            return oriY;
+        public void setOriY(double oriY) {
+            this.oriY = oriY;
         }
 
-        public double getOriHeight() {
-            return oriHeight;
-        }
-
-        public double getOriWidth() {
-            return oriWidth;
-        }
-
-        public void setOriHeight(double oriHeight) {
-            this.oriHeight = oriHeight;
-        }
-
-        public void setOriWidth(double oriWidth) {
-            this.oriWidth = oriWidth;
+        public void setOriX(double oriX) {
+            this.oriX = oriX;
         }
 
         public void setY(double y) {
@@ -207,6 +182,10 @@ public class ExternalImageHandler {
             }else {
                 return false;
             }
+        }
+
+        public boolean canKeep() {
+            return Math.abs(this.x-this.oriX)<5||Math.abs(this.y-this.oriY)<5;
         }
     }
 

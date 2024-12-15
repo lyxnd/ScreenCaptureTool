@@ -45,22 +45,21 @@ public class EditRecordController {
             });
 
             for (String str : recordsList) {
-                Button btn = createButton(str);
+                Button btn = createButton(str,self.getWidth());
                 records.getChildren().add(btn);
             }
         });
     }
 
-    private Button createButton(String str) {
+    private Button createButton(String str,double width) {
         Button btn = new Button(str);
-        btn.setPrefWidth(self.getWidth());
+        btn.setPrefWidth(width);
         btn.setPrefHeight(30);
         btn.setOnAction(e -> {
             String str1=e.getSource().toString().split("'")[1];
             int a = str1.indexOf("(");
             int index= Integer.parseInt(str1.substring(a+1,str1.length()-1));
             ControllerInstance.getInstance().getController().jumpTo(index);
-            ControllerInstance.getInstance().getController().saveCurrentState("jump edit("+recordsList.size()+")",false);
         });
         return btn;
     }
@@ -71,9 +70,9 @@ public class EditRecordController {
     }
 
 
-    public void addRecord(String editType) {
+    public void addRecord(String editType,double width) {
         recordsList.add(editType);
-        Button btn = createButton(editType);
+        Button btn = createButton(editType,width);
         records.getChildren().add(btn);
     }
 

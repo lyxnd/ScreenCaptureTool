@@ -14,6 +14,8 @@ import net.jackchuan.screencapturetool.CaptureProperties;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 
 import java.io.*;
+import java.net.URI;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -41,17 +43,22 @@ public class SettingController {
     @FXML
     private CheckBox drag, pencil, rubber, rect, filledRect, oval, arrow, line, wave;
     @FXML
-    private CheckBox color, strokeUp, strokeDown, undo, redo,autoCopy,autoSelect;
+    private CheckBox color, strokeUp, strokeDown, undo, redo, autoCopy, autoSelect, autoLaunch;
     private Stage parent;
     private boolean changing = false;
 
     @FXML
     private void initialize() {
         Platform.runLater(() -> {
+            if(setBox.getScene()==null)
+                return;
             parent = (Stage) setBox.getScene().getWindow();
             setBox.setPrefHeight(parent.getHeight());
             setBox.setPrefWidth(parent.getWidth());
             initSettings();
+            parent.setOnCloseRequest(e -> {
+                saveOnOriginalPath();
+            });
             captureType.valueProperty().addListener((obj, oldVal, newVal) -> {
                 CaptureProperties.captureType = newVal;
             });
@@ -122,6 +129,7 @@ public class SettingController {
         isShiftNeeded.setSelected(CaptureProperties.isShiftNeeded);
         isAltNeeded.setSelected(CaptureProperties.isAltNeeded);
         isCtrlNeeded.setSelected(CaptureProperties.isCtrlNeeded);
+        autoLaunch.setSelected(CaptureProperties.autoLaunch);
         autoCopy.setSelected(CaptureProperties.autoCopy);
         autoSelect.setSelected(CaptureProperties.autoSelect);
         captureType.setValue(CaptureProperties.captureType);
@@ -198,6 +206,9 @@ public class SettingController {
             case "autoSelect" -> {
                 CaptureProperties.autoSelect = autoSelect.isSelected();
             }
+            case "autoLaunch" -> {
+                CaptureProperties.autoLaunch = autoLaunch.isSelected();
+            }
 
         }
 
@@ -228,6 +239,7 @@ public class SettingController {
         undo.setSelected(isSelected);
         redo.setSelected(isSelected);
         autoCopy.setSelected(isSelected);
+        autoLaunch.setSelected(isSelected);
     }
 
     @FXML
@@ -238,14 +250,37 @@ public class SettingController {
 
     @FXML
     private void saveAsFile() {
+        if (autoLaunch.isSelected() && !CaptureProperties.autoLaunchEnabled) {
+            if (CaptureProperties.exePath != null && !CaptureProperties.exePath.isEmpty() && !CaptureProperties.exePath.isBlank()) {
+                registerReg(CaptureProperties.exePath, new File(CaptureProperties.exePath).getParent());
+            } else {
+                FileChooser fc = new FileChooser();
+                fc.setInitialDirectory(new File(CaptureProperties.selectPath));
+                fc.setTitle("选择安装目录下的CaptureTool.exe文件");
+                File f = fc.showOpenDialog(parent);
+                if (f != null) {
+                    CaptureProperties.updateSelectPath(f.getAbsolutePath());
+                    CaptureProperties.exePath = f.getAbsolutePath();
+                    registerReg(f.getAbsolutePath(), f.getParent());
+                }
+            }
+            CaptureProperties.autoLaunchEnabled = true;
+        }else{
+            if(!autoLaunch.isSelected()){
+                CaptureProperties.autoLaunchEnabled=false;
+                unRegisterReg();
+            }
+        }
+
         // save settings to file here
         FileChooser chooser = new FileChooser();
         chooser.setInitialDirectory(new File(CaptureProperties.selectPath));
         chooser.setInitialFileName("config.txt");
-        chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("文本文件", ".txt"));
+        chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("文本文件", "txt"));
         chooser.setTitle("Save configurations as file");
         File file = chooser.showSaveDialog(parent);
         if (file != null) {
+            CaptureProperties.updateSelectPath(file.getAbsolutePath());
             Platform.runLater(() -> {
                 savePath.setText(file.getAbsolutePath());
             });
@@ -259,7 +294,7 @@ public class SettingController {
                     CaptureProperties.configPath = file.getAbsolutePath();
                     configFile.setWritable(false);
                 }
-               updateState("configuration saved successfully!");
+                updateState("configuration saved successfully!");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -296,11 +331,34 @@ public class SettingController {
                 "\n autoCopy=" + autoCopy.isSelected() +
                 "\n autoSelect=" + autoSelect.isSelected() +
                 "\n selectPath=" + CaptureProperties.selectPath +
+                "\n autoLaunch=" + autoLaunch.isSelected() +
+                "\n exePath=" + CaptureProperties.exePath +
+                "\n autoLaunchEnabled=" + CaptureProperties.autoLaunchEnabled +
                 "\n}";
     }
 
     public void saveOnOriginalPath() {
-        File f=new File(savePath.getText());
+        if (autoLaunch.isSelected() && !CaptureProperties.autoLaunchEnabled) {
+            if (CaptureProperties.exePath != null && !CaptureProperties.exePath.isEmpty() && !CaptureProperties.exePath.isBlank()) {
+                registerReg(CaptureProperties.exePath, new File(CaptureProperties.exePath).getParent());
+            } else {
+                FileChooser fc = new FileChooser();
+                fc.setInitialDirectory(new File(CaptureProperties.selectPath));
+                fc.setTitle("选择安装目录下的CaptureTool.exe文件");
+                File f = fc.showOpenDialog(parent);
+                if (f != null) {
+                    CaptureProperties.exePath = f.getAbsolutePath();
+                    registerReg(f.getAbsolutePath(), f.getParent());
+                }
+            }
+            CaptureProperties.autoLaunchEnabled = true;
+        }else {
+            if(!autoLaunch.isSelected()){
+                CaptureProperties.autoLaunchEnabled=false;
+                unRegisterReg();
+            }
+        }
+        File f = new File(savePath.getText());
         f.setWritable(true);
         try (FileWriter writer1 = new FileWriter(f)) {
             writer1.write(toString());
@@ -310,10 +368,61 @@ public class SettingController {
             throw new RuntimeException(e);
         }
     }
-    public void updateState(String value){
+
+    public void updateState(String value) {
         Platform.runLater(() -> {
             state.setText(value);
         });
+    }
+
+    public void registerReg(String path, String temp) {
+        path=path.replace("\\","\\\\");
+        System.out.println(path);
+        String regContent = String.format("""
+                Windows Registry Editor Version 5.00
+                [HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run]
+                "%s"="%s"
+                """, "CaptureTool", path);
+        temp += "/autoLaunch.reg";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(temp))) {
+            writer.write(regContent);
+            System.out.println(".reg file created: " + temp);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        // 导入 .reg 文件
+        try {
+            String command = String.format(
+                    "powershell -Command \"Start-Process regedit.exe -ArgumentList '/s', '%s' -Verb RunAs\"",
+                    temp
+            );
+            // 执行命令
+            Process process = Runtime.getRuntime().exec(command);
+            // 等待命令完成
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                System.out.println("Registry updated successfully.");
+            } else {
+                System.err.println("Failed to update registry. Exit code: " + exitCode);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void unRegisterReg() {
+        try {
+            // 执行删除注册表键值的命令
+            String command = "reg delete \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\" /v \"CaptureTool\" /f";
+            Process process = Runtime.getRuntime().exec(command);
+
+            // 等待命令执行完成
+            process.waitFor();
+            System.out.println("注册表键值已删除");
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }

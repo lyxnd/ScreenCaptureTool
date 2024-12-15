@@ -1,5 +1,5 @@
 ScreenCaptureToolProperties :{
- isShiftNeeded=true
+ isShiftNeeded=false
  isAltNeeded=false
  isCtrlNeeded=false
  captureType=Python's pillow
@@ -23,6 +23,8 @@ ScreenCaptureToolProperties :{
  undo=true
  redo=true
  captureKey=88
- defaultPath=true
- autoCopy=false
+ autoCopy=true
+ autoSelect=false
+ selectPath=D:/
+
 }

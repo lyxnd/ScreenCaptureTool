@@ -51,13 +51,13 @@ public enum DrawType implements DrawingAction {
         public void draw(GraphicsContext g2, double startX, double startY, double endX, double endY, Color foreColor) {
             // 计算箭头的角度
             double angle = Math.atan2(endY - startY, endX - startX);
-            double arrowLength=25;
+            double arrowLength=20;
             // 绘制箭头的主体线
             g2.setStroke(foreColor);
             g2.setLineWidth(2);
             g2.strokeLine(startX, startY, endX, endY);
             // 计算箭头头部的两个点
-            double arrowAngle = Math.toRadians(30); // 箭头两侧的角度（可以根据需要调整）
+            double arrowAngle = Math.toRadians(15); // 箭头两侧的角度（可以根据需要调整）
             double x1 = endX - arrowLength * Math.cos(angle - arrowAngle);
             double y1 = endY - arrowLength * Math.sin(angle - arrowAngle);
             double x2 = endX - arrowLength * Math.cos(angle + arrowAngle);

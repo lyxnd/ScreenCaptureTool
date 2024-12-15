@@ -43,6 +43,7 @@
                 <HBox>
                     <CheckBox fx:id="autoCopy" text="截图后自动复制到剪切板" styleClass="imp-check"/>
                     <CheckBox fx:id="autoSelect" text="自动识别选择截取区域" styleClass="imp-check"/>
+                    <CheckBox fx:id="autoLaunch" text="开机自启动" styleClass="imp-check"/>
                 </HBox>
                 <TitledPane text="快捷键配置" alignment="CENTER">
                     <VBox alignment="CENTER" fx:id="setBox" style="-fx-font-weight: bold">

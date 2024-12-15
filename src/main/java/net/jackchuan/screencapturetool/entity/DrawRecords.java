@@ -1,15 +1,11 @@
 package net.jackchuan.screencapturetool.entity;
 
-import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
-import net.jackchuan.screencapturetool.external.ExternalImageHandler;
 import net.jackchuan.screencapturetool.external.ExternalImageHandler.DrawableImage;
 import net.jackchuan.screencapturetool.util.impl.DrawType;
-
-import java.util.Stack;
 
 
 /**
@@ -25,18 +21,37 @@ public class DrawRecords {
     private double endY;
     private double scaleX;
     private double scaleY;
+    private double width, height;
     private Color color;
-    private WritableImage image;
-    private DrawableImage externalImage;
-    private boolean shouldRender=true;
-//    private boolean changeRender=false;
-//    private boolean shouldExchange=false;
+    private Image image;
+    private boolean shouldRender = true;
     private String detailInfo;
-    private ExternalImageRecord externalRecord;
-    public DrawRecords(){
+    private DrawableImage drawableImage;
+    private long editTick;
+    private boolean shouldRepaint;
+
+    public DrawRecords() {
     }
 
-    public DrawRecords(String drawType, double startX, double startY, double endX,double endY,WritableImage img,Color color) {
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof DrawRecords record) {
+            boolean type = this.getDrawType().equals(record.getDrawType());
+            if (type) {
+                if ("externalImg".equals(getDrawType())) {
+                    return image.equals(record.getImage());
+                } else {
+                    return getEditTick() == record.getEditTick();
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public DrawRecords(String drawType, double startX, double startY, double endX, double endY, WritableImage img, Color color, long tick) {
         this.drawType = drawType;
         this.startX = startX;
         this.startY = startY;
@@ -44,96 +59,113 @@ public class DrawRecords {
         this.endY = endY;
         this.image = img;
         this.color = color;
-    }
-    public DrawRecords(String drawType,DrawableImage externalImage,String editType) {
-        this.drawType = drawType;
-//        try {
-            this.externalImage = externalImage;
-            ImageEditRecord rec=new ImageEditRecord(editType,externalImage.getX(),externalImage.getY(),
-                    externalImage.getWidth(),externalImage.getHeight());
-            externalRecord= new ExternalImageRecord();
-            externalRecord.addRecord(rec);
-//        } catch (CloneNotSupportedException e) {
-//            throw new RuntimeException(e);
-//        }
+        this.editTick = tick;
     }
 
-    public void draw(GraphicsContext gc,GraphicsContext animatorGc,int undoOrRedo){
+    public DrawRecords(String drawType, DrawableImage externalImage, String detail, long tick) {
+        this.drawType = drawType;
+        this.drawableImage = externalImage;
+        setStartX(externalImage.getX());
+        setStartY(externalImage.getY());
+        setWidth(externalImage.getWidth());
+        setHeight(externalImage.getHeight());
+        setImage(externalImage.getImage());
+        setDetailInfo(detail);
+        setEditTick(tick);
+    }
+
+    public void draw(GraphicsContext gc, GraphicsContext animatorGc) {
         gc.setStroke(color);
         gc.setFill(color);
-        switch (drawType){
-            case "rect" ->{
-                DrawType.RECTANGLE.draw(gc, startX, startY,endX,endY);
+        switch (drawType) {
+            case "rect" -> {
+                DrawType.RECTANGLE.draw(gc, startX, startY, endX, endY);
             }
-            case "fillRect" ->{
-                DrawType.FILLED_RECTANGLE.draw(gc, startX, startY,endX,endY,color);
+            case "fillRect" -> {
+                DrawType.FILLED_RECTANGLE.draw(gc, startX, startY, endX, endY, color);
             }
-            case "arrow" ->{
-                DrawType.ARROW.draw(gc, startX, startY, endX,endY, color);
+            case "arrow" -> {
+                DrawType.ARROW.draw(gc, startX, startY, endX, endY, color);
             }
-            case "line" ->{
+            case "line" -> {
                 DrawType.LINE.draw(gc, startX, startY, endX, endY);
             }
-            case "wave" ->{
+            case "wave" -> {
                 DrawType.WAVE.draw(gc, startX, startY, endX, endY);
             }
-            case "circle" ->{
+            case "circle" -> {
                 DrawType.CIRCLE.draw(gc, startX, startY, endX, endY);
             }
-            case "filledOval" ->{
-                DrawType.FILLED_CIRCLE.draw(gc, startX, startY, endX, endY,color);
+            case "filledOval" -> {
+                DrawType.FILLED_CIRCLE.draw(gc, startX, startY, endX, endY, color);
             }
-            case "externalImg" ->{
-//                if(externalImage!=null&&isShouldRender()&&externalImage.shouldRender()){
-//                    gc.drawImage(externalImage.getImage(), externalImage.getX(), externalImage.getY(),
-//                            externalImage.getWidth(), externalImage.getHeight());
-//                    if(externalImage.shouldRenderBorder()){
-//                        gc.setStroke(Color.CYAN);
-//                        gc.setLineWidth(3);
-//                        gc.strokeRect(externalImage.getX(), externalImage.getY(),
-//                                externalImage.getWidth(), externalImage.getHeight());
-//                    }
-//                }
-                updateExternalImage(gc,animatorGc,undoOrRedo);
+            case "externalImg" -> {
+                updateExternalImage(gc, animatorGc);
             }
         }
     }
 
-    public void updateExternalImage(GraphicsContext gc,GraphicsContext animatorGc,int undoOrRedo){
-        gc.clearRect(externalImage.getX(), externalImage.getY(), externalImage.getWidth(), externalImage.getHeight());
-        if(undoOrRedo==1){
-            ImageEditRecord record = externalRecord.undo(gc,animatorGc, externalImage.getImage());
-            if(record!=null){
-                externalRecord.updateExternalPos(externalImage,record);
-            }
-        }else if(undoOrRedo==-1){
-            ImageEditRecord record = externalRecord.redo(gc,animatorGc, externalImage.getImage());
-            if(record!=null){
-                externalRecord.updateExternalPos(externalImage,record);
-            }
-        }else{
-            gc.drawImage(externalImage.getImage(), externalImage.getX(), externalImage.getY(),
-                    externalImage.getWidth(), externalImage.getHeight());
+    public void updateExternalImage(GraphicsContext gc, GraphicsContext animatorGc) {
+        if (!isShouldRepaint()) {
+            return;
+        }
+        if(drawableImage.shouldRenderBorder()){
+            gc.setStroke(Color.CYAN);
+            gc.setLineWidth(3);
+            gc.strokeRect(getStartX(), getStartY(), getWidth(), getHeight());
+        }
+        if(isShouldRender()){
+            gc.drawImage(getImage(), getStartX(), getStartY(), getWidth(), getHeight());
+        }else {
+            animatorGc.drawImage(getImage(), getStartX(), getStartY(), getWidth(), getHeight());
         }
     }
 
-    public ExternalImageRecord getExternalRecord() {
-        return externalRecord;
+    public void print() {
+
     }
 
-    public void setExternalRecord(ExternalImageRecord externalRecord) {
-        this.externalRecord = externalRecord;
+    public DrawableImage getDrawableImage() {
+        return drawableImage;
     }
 
-    public DrawableImage getExternalImage() {
-        return externalImage;
+    public void setDrawableImage(DrawableImage drawableImage) {
+        this.drawableImage = drawableImage;
     }
 
-    public void setExternalImage(DrawableImage externalImage) {
-        this.externalImage = externalImage;
+    public void setShouldRepaint(boolean shouldRepaint) {
+        this.shouldRepaint = shouldRepaint;
     }
 
-//    public boolean isShouldExchange() {
+    public boolean isShouldRepaint() {
+        return shouldRepaint;
+    }
+
+    public void setWidth(double width) {
+        this.width = width;
+    }
+
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    public double getWidth() {
+        return width;
+    }
+
+    public double getHeight() {
+        return height;
+    }
+
+
+    public long getEditTick() {
+        return editTick;
+    }
+
+    public void setEditTick(long editTick) {
+        this.editTick = editTick;
+    }
+    //    public boolean isShouldExchange() {
 //        return shouldExchange;
 //    }
 //
@@ -213,10 +245,11 @@ public class DrawRecords {
         return drawType;
     }
 
-    public WritableImage getImage() {
+    public Image getImage() {
         return image;
     }
-    public void setImage(WritableImage image) {
+
+    public void setImage(Image image) {
         this.image = image;
     }
 
@@ -238,82 +271,18 @@ public class DrawRecords {
 
     @Override
     public String toString() {
-        String lo=externalImage.getX()+"\t"+externalImage.getY()+" | "+
-                externalImage.getOriX()+"\t"+externalImage.getOriY();
+        String pos = drawableImage==null? "empty" : drawableImage.getX()+"\t"+drawableImage.getY();
         return "DrawRecords{" +
-                "\tdrawType=" + drawType +
-                ",\t image=" + image +
-                ",\t externalImage info=" + lo +
-                ",\t shouldRender=" + shouldRender +
-//                ",\t shouldExchange=" + shouldExchange +
-                ",\t detail=" + detailInfo +
+                "drawType='" + drawType + '\'' +
+                ", startX=" + startX +
+                ", startY=" + startY +
+                ", width=" + width +
+                ", height=" + height +
+                ", image info=" + pos +
+                ", shouldRender=" + shouldRender +
+                ", detailInfo='" + detailInfo + '\'' +
+                ", editTick=" + editTick +
+                ", shouldRepaint=" + shouldRepaint +
                 '}';
-    }
-
-    public static class ExternalImageRecord{
-        Stack<ImageEditRecord> exImgStack;
-        Stack<ImageEditRecord> undoStack;
-        public ExternalImageRecord(){
-            exImgStack = new Stack<>();
-            undoStack = new Stack<>();
-        }
-        public boolean shouldPop(){
-            return exImgStack.isEmpty();
-        }
-
-        public ImageEditRecord undo(GraphicsContext gc,GraphicsContext animatorGc, Image image){
-            undoStack.push(exImgStack.pop());
-            if(!exImgStack.isEmpty()){
-                ImageEditRecord record = exImgStack.getLast();
-                gc.drawImage(image,record.getX(), record.getY(),record.getW(),record.getH());
-                animatorGc.setStroke(Color.CYAN);
-                animatorGc.setLineWidth(3);
-                animatorGc.strokeRect(record.getX(), record.getY(), record.getW(), record.getH());
-                return record;
-            }else {
-                return null;
-            }
-        }
-        public ImageEditRecord redo(GraphicsContext gc,GraphicsContext animatorGc, Image image){
-            if(!undoStack.isEmpty()){
-                ImageEditRecord record = undoStack.pop();
-                exImgStack.push(record);
-                gc.drawImage(image,record.getX(), record.getY(),record.getW(),record.getH());
-                animatorGc.setStroke(Color.CYAN);
-                animatorGc.setLineWidth(3);
-                animatorGc.strokeRect(record.getX(), record.getY(), record.getW(), record.getH());
-                return record;
-            }else {
-                return null;
-            }
-
-        }
-        public void addRecord(ImageEditRecord record){
-            exImgStack.push(record);
-        }
-        public void print(){
-            System.out.println("---------- Log 图片编辑记录 ----------------");
-            System.out.println("\t ======  全部记录 =======  \t");
-            for(ImageEditRecord r:exImgStack){
-                System.out.println(r.toString());
-            }
-            System.out.println("\t ====== undo 记录  =======  \t");
-            for(ImageEditRecord r:undoStack){
-                System.out.println(r.toString());
-            }
-
-            System.out.println("---------- Log finished ----------------");
-        }
-
-        public void updateExternalPos(DrawableImage externalImage,ImageEditRecord record) {
-            externalImage.setX(record.getX());
-            externalImage.setY(record.getY());
-            externalImage.setWidth(record.getW());
-            externalImage.setHeight(record.getH());
-        }
-
-        public boolean canRedo() {
-            return !this.undoStack.isEmpty();
-        }
     }
 }

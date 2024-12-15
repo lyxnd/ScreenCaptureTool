@@ -3,6 +3,7 @@ package net.jackchuan.screencapturetool;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import net.jackchuan.screencapturetool.util.ScreenCaptureUtil;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.List;
@@ -39,12 +40,20 @@ public class CaptureProperties {
     public static boolean isCtrlNeeded=false;
     public static boolean autoCopy;
     public static boolean autoSelect;
+    public static boolean autoLaunch;
+    public static boolean autoLaunchEnabled;
     public static String configPath;
-    public static String selectPath;
+    public static String selectPath="D:/";
+    public static String exePath;
     public static double scale;
+    public static double width;
+    public static double height;
 
     static {
+        Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
         scale= ScreenCaptureUtil.getScreenScale();
+        width=size.getWidth();
+        height=size.getHeight();
     }
 
     public static void updateAll(boolean flag){
@@ -69,27 +78,14 @@ public class CaptureProperties {
         redo = flag;
     }
 
-    public static boolean loadProperties(){
+    public static boolean loadProperties() throws IOException {
         File file=new File(System.getProperty("user.home")+"/captureToolConfig.txt");
         if(file.exists()){
             try(BufferedReader reader=new BufferedReader(new FileReader(file))){
                 configPath = reader.readLine();
                 System.out.println(configPath);
                 if("configuration.txt".equals(configPath)){
-                    InputStream inputStream = ScreenCaptureToolApp.class.getResourceAsStream(configPath);
-                    if (inputStream == null) {
-                        throw new FileNotFoundException("Resource not found: " + configPath);
-                    }
-                    // 使用 BufferedReader 和 Stream API 读取文件内容
-                    try (BufferedReader reader1 = new BufferedReader(new InputStreamReader(inputStream))) {
-                        List<String> lines = reader1.lines().toList();
-                        for (String line : lines) {
-                            if (line.contains("=")) {
-                                String[] pair = line.split("=");
-                                updateSettings(pair[0].trim(), pair[1].trim());
-                            }
-                        }
-                    }
+                    readFromJar();
                 }else {
                     File configFile=new File(configPath);
                     List<String> list = Files.readAllLines(configFile.toPath());
@@ -101,11 +97,29 @@ public class CaptureProperties {
                     }
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                readFromJar();
             }
             return true;
         }else {
             return false;
+        }
+    }
+
+    private static void readFromJar() throws IOException {
+        configPath="configuration.txt";
+        InputStream inputStream = ScreenCaptureToolApp.class.getResourceAsStream(configPath);
+        if (inputStream == null) {
+            throw new FileNotFoundException("Resource not found: " + configPath);
+        }
+        // 使用 BufferedReader 和 Stream API 读取文件内容
+        try (BufferedReader reader1 = new BufferedReader(new InputStreamReader(inputStream))) {
+            List<String> lines = reader1.lines().toList();
+            for (String line : lines) {
+                if (line.contains("=")) {
+                    String[] pair = line.split("=");
+                    updateSettings(pair[0].trim(), pair[1].trim());
+                }
+            }
         }
     }
     private static void updateSettings(String key,String value) {
@@ -192,6 +206,15 @@ public class CaptureProperties {
             case "selectPath"->{
                 selectPath= value;
             }
+            case "autoLaunch"->{
+                autoLaunch= Boolean.parseBoolean(value);
+            }
+            case "exePath"->{
+                exePath= value;
+            }
+            case "autoLaunchEnabled"->{
+                autoLaunchEnabled= Boolean.parseBoolean(value);
+            }
         }
 
     }
@@ -246,6 +269,9 @@ public class CaptureProperties {
                 "\n autoCopy=" + autoCopy +
                 "\n autoSelect=" + autoSelect +
                 "\n selectPath=" + selectPath +
+                "\n autoLaunch=" + autoLaunch +
+                "\n exePath=" + exePath +
+                "\n autoLaunchEnabled=" + autoLaunchEnabled +
                 "\n}";
     }
 }
