@@ -1,5 +1,4 @@
 package net.jackchuan.screencapturetool;
-
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
@@ -23,16 +22,14 @@ import javafx.util.Pair;
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 import net.jackchuan.screencapturetool.controller.SettingController;
 import net.jackchuan.screencapturetool.util.*;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 功能：
@@ -50,18 +47,18 @@ public class ScreenCaptureToolApp extends Application {
     private double startX, startY, endX, endY;
     private ContextMenu popMenu;
     private MenuItem fullCut,test,test1;
+    public static final Logger LOGGER = LoggerFactory.getLogger(ScreenCaptureToolApp.class);
     @Override
     public void start(Stage stage) throws IOException {
         // 隐藏主窗口
         Platform.setImplicitExit(false);
         LibraryLoader.loadOpenCVLibrary();
-//        LibraryLoader.loadJNativeHook();
         // 注册全局热键监听
         registerGlobalKeyListener();
         try {
             CaptureProperties.checkFile();
         } catch (IOException e) {
-            try (PrintWriter writer = new PrintWriter(new File("F:/error.log"))) {
+            try (PrintWriter writer = new PrintWriter(new File(CaptureProperties.logPath))) {
                 e.printStackTrace(writer);
             }
         }
@@ -72,9 +69,6 @@ public class ScreenCaptureToolApp extends Application {
 
     private void registerGlobalKeyListener() {
         try {
-            // 禁用 JNativeHook 的日志输出
-            Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-            logger.setLevel(Level.OFF);
 
             // 注册全局键盘监听
             GlobalScreen.registerNativeHook();

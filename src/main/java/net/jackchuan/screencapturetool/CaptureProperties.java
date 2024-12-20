@@ -1,8 +1,5 @@
 package net.jackchuan.screencapturetool;
-
-import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import net.jackchuan.screencapturetool.util.ScreenCaptureUtil;
-
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
@@ -20,17 +17,7 @@ public class CaptureProperties {
     public static boolean reset;
     public static boolean clearHistory;
     public static boolean drag;
-    public static boolean pencil;
     public static boolean rubber;
-    public static boolean rect;
-    public static boolean filledRect;
-    public static boolean oval;
-    public static boolean arrow;
-    public static boolean line;
-    public static boolean wave;
-    public static boolean color;
-    public static boolean strokeUp;
-    public static boolean strokeDown;
     public static boolean undo;
     public static boolean redo;
     public static String captureType="Python's pillow";
@@ -41,10 +28,13 @@ public class CaptureProperties {
     public static boolean autoCopy;
     public static boolean autoSelect;
     public static boolean autoLaunch;
+    public static boolean shouldLog=true;
     public static boolean autoLaunchEnabled;
+    public static boolean scaleOnMouse=false;
     public static String configPath;
     public static String selectPath="D:/";
-    public static String exePath;
+    public static String exePath="";
+    public static String logPath="F:/captureToolLog.txt";
     public static double scale;
     public static double width;
     public static double height;
@@ -63,17 +53,7 @@ public class CaptureProperties {
         reset = flag;
         clearHistory = flag;
         drag = flag;
-        pencil = flag;
         rubber = flag;
-        rect = flag;
-        filledRect = flag;
-        oval = flag;
-        arrow = flag;
-        line = flag;
-        wave = flag;
-        color = flag;
-        strokeUp = flag;
-        strokeDown = flag;
         undo = flag;
         redo = flag;
     }
@@ -143,38 +123,8 @@ public class CaptureProperties {
             case "drag" -> {
                 drag = Boolean.parseBoolean(value);
             }
-            case "pencil" -> {
-                pencil = Boolean.parseBoolean(value);
-            }
             case "rubber" -> {
                 rubber = Boolean.parseBoolean(value);
-            }
-            case "rect" -> {
-                rect = Boolean.parseBoolean(value);
-            }
-            case "filledRect" -> {
-                filledRect = Boolean.parseBoolean(value);
-            }
-            case "oval" -> {
-                oval = Boolean.parseBoolean(value);
-            }
-            case "arrow" -> {
-                arrow = Boolean.parseBoolean(value);
-            }
-            case "line" -> {
-                line = Boolean.parseBoolean(value);
-            }
-            case "wave" -> {
-                wave = Boolean.parseBoolean(value);
-            }
-            case "color" -> {
-                color = Boolean.parseBoolean(value);
-            }
-            case "strokeUp" -> {
-                strokeUp = Boolean.parseBoolean(value);
-            }
-            case "strokeDown" -> {
-                strokeDown = Boolean.parseBoolean(value);
             }
             case "undo" -> {
                 undo = Boolean.parseBoolean(value);
@@ -215,6 +165,9 @@ public class CaptureProperties {
             case "autoLaunchEnabled"->{
                 autoLaunchEnabled= Boolean.parseBoolean(value);
             }
+            case "logPath"->{
+                logPath= value;
+            }
         }
 
     }
@@ -229,6 +182,13 @@ public class CaptureProperties {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+    public static File getSelectDirectory(){
+        File f=new File(selectPath);
+        if(f.isDirectory())
+            return f;
+        else
+            return new File(f.getParent());
     }
 
     public static void checkFile() throws IOException {
@@ -252,17 +212,7 @@ public class CaptureProperties {
                 "\n reset=" + reset +
                 "\n clearHistory=" + clearHistory +
                 "\n drag=" + drag +
-                "\n pencil=" + pencil +
                 "\n rubber=" + rubber +
-                "\n rect=" + rect +
-                "\n filledRect=" + filledRect +
-                "\n oval=" + oval +
-                "\n arrow=" + arrow +
-                "\n line=" + line +
-                "\n wave=" + wave +
-                "\n color=" + color +
-                "\n strokeUp=" + strokeUp +
-                "\n strokeDown=" + strokeDown +
                 "\n undo=" + undo +
                 "\n redo=" + redo +
                 "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
@@ -272,6 +222,13 @@ public class CaptureProperties {
                 "\n autoLaunch=" + autoLaunch +
                 "\n exePath=" + exePath +
                 "\n autoLaunchEnabled=" + autoLaunchEnabled +
+                "\n logPath=" + logPath +
+                "\n scaleOnMouse=" + scaleOnMouse +
                 "\n}";
+    }
+
+    public static boolean checkOCR() {
+        //TODO install ocr
+        return true;
     }
 }

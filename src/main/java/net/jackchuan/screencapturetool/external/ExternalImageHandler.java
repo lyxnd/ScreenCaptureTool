@@ -4,6 +4,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import net.jackchuan.screencapturetool.util.impl.CornerType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +48,56 @@ public class ExternalImageHandler {
         gc.strokeRect(image.x, image.y, image.width, image.height);
     }
 
-    public boolean isNearBorder(DrawableImage image, double mouseX, double mouseY) {
-        double borderThreshold = 10;
-        return (mouseX >= image.x + image.width - borderThreshold && mouseX <= image.x + image.width + borderThreshold) ||
-                (mouseY >= image.y + image.height - borderThreshold && mouseY <= image.y + image.height + borderThreshold);
+    public CornerType isNearBorder(DrawableImage image, double mouseX, double mouseY) {
+        double borderThreshold = 10;  // 阈值，决定多近算在边界上
+        double cornerThreshold = 10;  // 角的距离阈值（用于角判断）
+        // 检查四个角
+        // 左上角
+        double distanceToTopLeft = Math.sqrt(Math.pow(mouseX - image.x, 2) + Math.pow(mouseY - image.y, 2));
+        if (distanceToTopLeft <= cornerThreshold) {
+            return CornerType.NORTHWEST;
+        }
+        // 右上角
+        double distanceToTopRight = Math.sqrt(Math.pow(mouseX - (image.x + image.width), 2) + Math.pow(mouseY - image.y, 2));
+        if (distanceToTopRight <= cornerThreshold) {
+            return CornerType.NORTHEAST;
+        }
+        // 左下角
+        double distanceToBottomLeft = Math.sqrt(Math.pow(mouseX - image.x, 2) + Math.pow(mouseY - (image.y + image.height), 2));
+        if (distanceToBottomLeft <= cornerThreshold) {
+            return CornerType.SOUTHWEST;
+        }
+        // 右下角
+        double distanceToBottomRight = Math.sqrt(Math.pow(mouseX - (image.x + image.width), 2) + Math.pow(mouseY - (image.y + image.height), 2));
+        if (distanceToBottomRight <= cornerThreshold) {
+            return CornerType.SOUTHEAST;
+        }
+        // 检查左边
+        if (mouseX >= image.x - borderThreshold && mouseX <= image.x + borderThreshold) {
+            if (mouseY >= image.y - borderThreshold && mouseY <= image.y + image.height + borderThreshold) {
+                return CornerType.WEST;
+            }
+        }
+        // 检查右边
+        if (mouseX >= image.x + image.width - borderThreshold && mouseX <= image.x + image.width + borderThreshold) {
+            if (mouseY >= image.y - borderThreshold && mouseY <= image.y + image.height + borderThreshold) {
+                return CornerType.EAST;
+            }
+        }
+        // 检查上边
+        if (mouseY >= image.y - borderThreshold && mouseY <= image.y + borderThreshold) {
+            if (mouseX >= image.x - borderThreshold && mouseX <= image.x + image.width + borderThreshold) {
+                return CornerType.NORTH;
+            }
+        }
+        // 检查下边
+        if (mouseY >= image.y + image.height - borderThreshold && mouseY <= image.y + image.height + borderThreshold) {
+            if (mouseX >= image.x - borderThreshold && mouseX <= image.x + image.width + borderThreshold) {
+                return CornerType.SOUTH;
+            }
+        }
+        // 如果不在任何边界上，返回 EMPTY
+        return CornerType.EMPTY;
     }
 
 

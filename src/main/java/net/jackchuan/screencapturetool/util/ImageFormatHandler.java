@@ -2,20 +2,16 @@ package net.jackchuan.screencapturetool.util;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -56,10 +52,10 @@ public class ImageFormatHandler {
         return bufferedImage;
     }
 
-    public static IntegerPair getScaledSize(Image image, double width, double height) {
+    public static RectanglePair getScaledSize(Image image, double width, double height) {
         double w = image.getWidth();
         double h = image.getHeight();
-        IntegerPair pair = new IntegerPair();
+        RectanglePair pair = new RectanglePair();
         double scale = 1;
         if (width < w || height < h) {
             scale = height / h * 0.25;

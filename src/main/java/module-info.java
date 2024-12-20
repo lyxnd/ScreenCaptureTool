@@ -1,14 +1,19 @@
 module net.jackchuan.screencapturetool {
-    requires com.github.kwhat.jnativehook;
     requires javafx.graphics;
-    requires javafx.controls;
-    requires javafx.fxml;
-    requires org.bytedeco.opencv;
     requires javafx.swing;
-    requires java.compiler;
+    requires javafx.fxml;
+    requires javafx.controls;
+    requires tess4j;
+    requires org.bytedeco.opencv;
     requires java.sql;
+    requires org.slf4j;
+    requires com.github.kwhat.jnativehook;
+    requires java.compiler;
+
 
     opens net.jackchuan.screencapturetool to javafx.fxml;
+    opens net.jackchuan.screencapturetool.external.picker to javafx.fxml;
+    opens net.jackchuan.screencapturetool.external.stage to javafx.fxml;
     opens net.jackchuan.screencapturetool.controller to javafx.fxml;
     exports net.jackchuan.screencapturetool;
     exports net.jackchuan.screencapturetool.test;

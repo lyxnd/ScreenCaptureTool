@@ -1,0 +1,8 @@
+assets/icon/arrow.png
+assets/icon/arrow_dashed.png
+assets/icon/arrow_filled.png
+assets/icon/arrow_empty.png
+assets/icon/arrow_two_dir.png
+assets/icon/arrow_wide.png
+assets/icon/arrow_wide_dashed.png
+assets/icon/arrow_wide_two_dir.png

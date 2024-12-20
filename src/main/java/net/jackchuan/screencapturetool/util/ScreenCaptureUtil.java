@@ -9,7 +9,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
 
 import javax.imageio.ImageIO;
-import javax.tools.Tool;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.MultiResolutionImage;

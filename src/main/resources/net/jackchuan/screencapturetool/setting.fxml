@@ -44,107 +44,47 @@
                     <CheckBox fx:id="autoCopy" text="截图后自动复制到剪切板" styleClass="imp-check"/>
                     <CheckBox fx:id="autoSelect" text="自动识别选择截取区域" styleClass="imp-check"/>
                     <CheckBox fx:id="autoLaunch" text="开机自启动" styleClass="imp-check"/>
+                    <CheckBox fx:id="scaleOnMouse" text="鼠标位置处缩放" styleClass="imp-check"/>
                 </HBox>
-                <TitledPane text="快捷键配置" alignment="CENTER">
-                    <VBox alignment="CENTER" fx:id="setBox" style="-fx-font-weight: bold">
+                <TitledPane fx:id="keys" text="快捷键配置" alignment="TOP_CENTER" style="-fx-padding: 0;">
+                    <VBox alignment="CENTER_LEFT" fx:id="setBox" styleClass="keys">
                         <!-- 第一行: 启用全部快捷键 -->
-                        <HBox alignment="CENTER" styleClass="fatherSet" >
+                        <HBox alignment="CENTER_LEFT" styleClass="fatherSet" >
                             <Label text="启用全部快捷键" />
                             <CheckBox fx:id="enableAll" onAction="#updateSettings"/>
                         </HBox>
 
-                        <!-- 第二行: 快捷键A -->
-                        <HBox alignment="CENTER" styleClass="childSet">
+                        <HBox alignment="CENTER_LEFT" styleClass="childSet">
                             <Label text="保存或导出 : Ctrl + S " />
                             <CheckBox fx:id="export" onAction="#updateSettings"/>
                         </HBox>
 
-                        <!-- 第三行: 快捷键B -->
-                        <HBox  alignment="CENTER" styleClass="childSet">
+                        <HBox  alignment="CENTER_LEFT" styleClass="childSet">
                             <Label text="复制到剪切板 : Ctrl + C" />
                             <CheckBox fx:id="copy" onAction="#updateSettings"/>
                         </HBox>
 
-                        <!-- 第四行: 快捷键C -->
-                        <HBox  alignment="CENTER" styleClass="childSet">
+                        <HBox  alignment="CENTER_LEFT" styleClass="childSet">
                             <Label text="重置为初始状态 : Ctrl + R " />
                             <CheckBox fx:id="reset" onAction="#updateSettings"/>
                         </HBox>
 
-                        <HBox  alignment="CENTER" styleClass="childSet">
+                        <HBox  alignment="CENTER_LEFT" styleClass="childSet">
                             <Label text="删除历史操作记录 : Shift + Delete " />
                             <CheckBox fx:id="clearHistory" onAction="#updateSettings"/>
                         </HBox>
 
-                        <HBox  alignment="CENTER" styleClass="childSet">
+                        <HBox  alignment="CENTER_LEFT" styleClass="childSet">
                             <Label text="拖动图片 : Alt + 鼠标 " />
                             <CheckBox fx:id="drag" onAction="#updateSettings"/>
                         </HBox>
 
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="铅笔模式 : P " />
-                            <CheckBox fx:id="pencil" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="橡皮模式 : E | Shift + 鼠标 " />
+                        <HBox  alignment="CENTER_LEFT" styleClass="childSet">
+                            <Label text="橡皮模式 :  Shift + 鼠标 " />
                             <CheckBox fx:id="rubber" onAction="#updateSettings"/>
                         </HBox>
 
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="绘制矩形框模式 R :" />
-                            <CheckBox fx:id="rect" onAction="#updateSettings"/>
-                        </HBox>
 
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="绘制半透明矩形模式 :" />
-                            <CheckBox fx:id="filledRect" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="绘制圆模式 : O " />
-                            <CheckBox fx:id="oval" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="绘制箭头模式 : A " />
-                            <CheckBox fx:id="arrow" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="绘制直线模式 : L " />
-                            <CheckBox fx:id="line" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="绘制波浪线模式 : W " />
-                            <CheckBox fx:id="wave" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="选择颜色 : C" />
-                            <CheckBox fx:id="color" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="增加铅笔宽度 : 上箭头" />
-                            <CheckBox fx:id="strokeUp" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="减小铅笔宽度 : 下箭头" />
-                            <CheckBox fx:id="strokeDown" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="返回上一步 : 左箭头 | Ctrl + Z" />
-                            <CheckBox fx:id="undo" onAction="#updateSettings"/>
-                        </HBox>
-
-                        <HBox  alignment="CENTER" styleClass="childSet">
-                            <Label text="重做 : 右箭头" />
-                            <CheckBox fx:id="redo" onAction="#updateSettings"/>
-                        </HBox>
                     </VBox>
                 </TitledPane>
             </VBox>

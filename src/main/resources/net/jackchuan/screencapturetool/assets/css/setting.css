@@ -4,8 +4,7 @@
 }
 .fatherSet{
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 0 0;
-
+    -fx-padding: 0;
 }
 /* 修改 ComboBox 的弹出框背景颜色 */
 .combo-box-popup .list-view {
@@ -25,4 +24,9 @@
 }
 .imp-check{
     -fx-padding: 10 15;
+}
+
+.keys {
+    -fx-font-weight: bold;
+    -fx-padding: -260 0 0 0;
 }

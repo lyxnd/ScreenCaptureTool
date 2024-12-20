@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -10,6 +8,10 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.collections.FXCollections?>
+<?import net.jackchuan.screencapturetool.external.picker.ArrowPicker?>
+<?import net.jackchuan.screencapturetool.external.picker.RectanglePicker?>
+<?import net.jackchuan.screencapturetool.external.picker.OvalPicker?>
+<?import net.jackchuan.screencapturetool.external.picker.LinePicker?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="net.jackchuan.screencapturetool.controller.CaptureDisplayController"
@@ -17,7 +19,7 @@
 
     <top>
         <ToolBar fx:id="tools">
-            <Button styleClass="icon-button" onAction="#upload">
+            <Button styleClass="icon-button" onAction="#upload" fx:id="upload">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/upload.png"/>
@@ -28,7 +30,7 @@
                 </tooltip>
             </Button>
 
-            <Button styleClass="icon-button" onAction="#createEmptyImage">
+            <Button styleClass="icon-button" onAction="#createEmptyImage" fx:id="createEmpty">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/createNew.png"/>
@@ -39,7 +41,7 @@
                 </tooltip>
             </Button>
 
-            <Button styleClass="icon-button" onAction="#saveCapture">
+            <Button styleClass="icon-button" onAction="#saveCapture" fx:id="save">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/save.png"/>
@@ -50,7 +52,7 @@
                 </tooltip>
             </Button>
 
-            <Button styleClass="icon-button" onAction="#copy">
+            <Button styleClass="icon-button" onAction="#copy" fx:id="copy">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/copy.png"/>
@@ -61,7 +63,7 @@
                 </tooltip>
             </Button>
             <Separator/>
-            <Button styleClass="icon-button" onAction="#undo">
+            <Button styleClass="icon-button" onAction="#undo" fx:id="undo">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/withdrawal.png"/>
@@ -72,7 +74,7 @@
                 </tooltip>
             </Button>
 
-            <Button styleClass="icon-button" onAction="#redo">
+            <Button styleClass="icon-button" onAction="#redo" fx:id="redo">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/forward.png"/>
@@ -83,7 +85,7 @@
                 </tooltip>
             </Button>
             <Separator/>
-            <Button styleClass="icon-button" onAction="#resetImage">
+            <Button styleClass="icon-button" onAction="#resetImage" fx:id="reset">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/reload.png"/>
@@ -93,7 +95,7 @@
                     <Tooltip text="reset image" styleClass="custom-tooltip"/>
                 </tooltip>
             </Button>
-            <Button styleClass="icon-button" onAction="#clearAllRecord">
+            <Button styleClass="icon-button" onAction="#clearAllRecord" fx:id="clear">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/clear_record.png"/>
@@ -138,82 +140,29 @@
                 </tooltip>
             </Button>
 
-            <Button styleClass="icon-button" onAction="#drawRect" fx:id="rect">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/rect.png"/>
-                    </ImageView>
-                </graphic>
+            <RectanglePicker styleClass="icon-button" fx:id="rect">
                 <tooltip>
                     <Tooltip text="draw rectangle" styleClass="custom-tooltip"/>
                 </tooltip>
-            </Button>
+            </RectanglePicker>
 
-            <Button styleClass="icon-button" onAction="#drawFilledRect" fx:id="filledRect">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/filled_rect.png"/>
-                    </ImageView>
-                </graphic>
-                <tooltip>
-                    <Tooltip text="draw filled rectangle" styleClass="custom-tooltip"/>
-                </tooltip>
-            </Button>
-
-            <Button styleClass="icon-button" onAction="#drawOval" fx:id="oval">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/oval.png"/>
-                    </ImageView>
-                </graphic>
+            <OvalPicker styleClass="icon-button" fx:id="oval">
                 <tooltip>
                     <Tooltip text="draw Oval" styleClass="custom-tooltip"/>
                 </tooltip>
-            </Button>
+            </OvalPicker>
 
-            <Button styleClass="icon-button" onAction="#drawFilledOval" fx:id="filledOval">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/filledCircle.png"/>
-                    </ImageView>
-                </graphic>
-                <tooltip>
-                    <Tooltip text="draw filled Oval with lightly transparency" styleClass="custom-tooltip"/>
-                </tooltip>
-            </Button>
-
-            <Button styleClass="icon-button" onAction="#drawArrow" fx:id="arrow">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/arrow.png"/>
-                    </ImageView>
-                </graphic>
+            <ArrowPicker styleClass="icon-button" fx:id="arrow">
                 <tooltip>
                     <Tooltip text="draw arrow" styleClass="custom-tooltip"/>
                 </tooltip>
-            </Button>
+            </ArrowPicker>
 
-            <Button styleClass="icon-button" onAction="#drawLine" fx:id="line">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/line.png"/>
-                    </ImageView>
-                </graphic>
+            <LinePicker styleClass="icon-button" fx:id="line">
                 <tooltip>
                     <Tooltip text="draw line" styleClass="custom-tooltip"/>
                 </tooltip>
-            </Button>
-
-            <Button styleClass="icon-button" onAction="#drawCos" fx:id="cos">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/cos.png"/>
-                    </ImageView>
-                </graphic>
-                <tooltip>
-                    <Tooltip text="draw sin(cos) line" styleClass="custom-tooltip"/>
-                </tooltip>
-            </Button>
+            </LinePicker>
 
             <ColorPicker fx:id="colorPicker" styleClass="icon-button" onAction="#colorPicker">
                 <tooltip>
@@ -248,6 +197,17 @@
                 </tooltip>
             </Button>
 
+            <Button styleClass="icon-button" onAction="#textDetection" fx:id="ocr">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/ocr.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Optical Character Recognition" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
+
             <Separator/>
             <ComboBox fx:id="processType" value="选择处理类型">
                 <items>
@@ -263,7 +223,7 @@
                 </items>
             </ComboBox>
 
-            <Button styleClass="icon-button" onAction="#processImage">
+            <Button styleClass="icon-button" onAction="#processImage" fx:id="process">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/process.png"/>
@@ -275,7 +235,7 @@
             </Button>
             <Separator/>
 
-            <Button styleClass="icon-button" onAction="#openSettingStage" >
+            <Button styleClass="icon-button" onAction="#openSettingStage" fx:id="setting">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/setting.png"/>
@@ -285,7 +245,7 @@
                     <Tooltip text="open setting stage" styleClass="custom-tooltip"/>
                 </tooltip>
             </Button>
-            <Button styleClass="icon-button" onAction="#completelyExit" >
+            <Button styleClass="icon-button" onAction="#completelyExit" fx:id="exit">
                 <graphic>
                     <ImageView fitHeight="20" fitWidth="20">
                         <Image url="@../screencapturetool/assets/icon/close.png"/>

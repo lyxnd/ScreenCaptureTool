@@ -11,12 +11,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import net.jackchuan.screencapturetool.CaptureProperties;
-import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 
 import java.io.*;
-import java.net.URI;
-import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * 功能：
@@ -24,6 +20,7 @@ import java.util.List;
  * 日期：2024/11/23 19:17
  */
 public class SettingController {
+    public TitledPane keys;
     @FXML
     private TextField savePath;
     @FXML
@@ -39,28 +36,33 @@ public class SettingController {
     @FXML
     private VBox setBox;
     @FXML
-    private CheckBox enableAll, export, copy, reset, clearHistory;
+    private CheckBox enableAll, export, copy, reset, clearHistory,scaleOnMouse;
     @FXML
-    private CheckBox drag, pencil, rubber, rect, filledRect, oval, arrow, line, wave;
+    private CheckBox drag,rubber;
     @FXML
-    private CheckBox color, strokeUp, strokeDown, undo, redo, autoCopy, autoSelect, autoLaunch;
+    private CheckBox autoCopy, autoSelect, autoLaunch;
     private Stage parent;
     private boolean changing = false;
+    private boolean shouldRegister = false;
 
     @FXML
     private void initialize() {
         Platform.runLater(() -> {
-            if(setBox.getScene()==null)
+            keys.setContentDisplay(ContentDisplay.CENTER);
+            if (setBox.getScene() == null)
                 return;
             parent = (Stage) setBox.getScene().getWindow();
             setBox.setPrefHeight(parent.getHeight());
             setBox.setPrefWidth(parent.getWidth());
             initSettings();
             parent.setOnCloseRequest(e -> {
-                saveOnOriginalPath();
+//                saveOnOriginalPath();
             });
             captureType.valueProperty().addListener((obj, oldVal, newVal) -> {
                 CaptureProperties.captureType = newVal;
+            });
+            scaleOnMouse.selectedProperty().addListener((obj, oldVal, newVal) -> {
+                CaptureProperties.scaleOnMouse=newVal;
             });
 
             GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
@@ -113,19 +115,7 @@ public class SettingController {
         reset.setSelected(CaptureProperties.reset);
         clearHistory.setSelected(CaptureProperties.clearHistory);
         drag.setSelected(CaptureProperties.drag);
-        pencil.setSelected(CaptureProperties.pencil);
         rubber.setSelected(CaptureProperties.rubber);
-        rect.setSelected(CaptureProperties.rect);
-        filledRect.setSelected(CaptureProperties.filledRect);
-        oval.setSelected(CaptureProperties.oval);
-        arrow.setSelected(CaptureProperties.arrow);
-        line.setSelected(CaptureProperties.line);
-        wave.setSelected(CaptureProperties.wave);
-        color.setSelected(CaptureProperties.color);
-        strokeUp.setSelected(CaptureProperties.strokeUp);
-        strokeDown.setSelected(CaptureProperties.strokeDown);
-        undo.setSelected(CaptureProperties.undo);
-        redo.setSelected(CaptureProperties.redo);
         isShiftNeeded.setSelected(CaptureProperties.isShiftNeeded);
         isAltNeeded.setSelected(CaptureProperties.isAltNeeded);
         isCtrlNeeded.setSelected(CaptureProperties.isCtrlNeeded);
@@ -161,44 +151,8 @@ public class SettingController {
             case "drag" -> {
                 CaptureProperties.drag = drag.isSelected();
             }
-            case "pencil" -> {
-                CaptureProperties.pencil = pencil.isSelected();
-            }
             case "rubber" -> {
                 CaptureProperties.rubber = rubber.isSelected();
-            }
-            case "rect" -> {
-                CaptureProperties.rect = rect.isSelected();
-            }
-            case "filledRect" -> {
-                CaptureProperties.filledRect = filledRect.isSelected();
-            }
-            case "oval" -> {
-                CaptureProperties.oval = oval.isSelected();
-            }
-            case "arrow" -> {
-                CaptureProperties.arrow = arrow.isSelected();
-            }
-            case "line" -> {
-                CaptureProperties.line = line.isSelected();
-            }
-            case "wave" -> {
-                CaptureProperties.wave = wave.isSelected();
-            }
-            case "color" -> {
-                CaptureProperties.color = color.isSelected();
-            }
-            case "strokeUp" -> {
-                CaptureProperties.strokeUp = strokeUp.isSelected();
-            }
-            case "strokeDown" -> {
-                CaptureProperties.strokeDown = strokeDown.isSelected();
-            }
-            case "undo" -> {
-                CaptureProperties.undo = undo.isSelected();
-            }
-            case "redo" -> {
-                CaptureProperties.redo = redo.isSelected();
             }
             case "autoCopy" -> {
                 CaptureProperties.autoCopy = autoCopy.isSelected();
@@ -209,7 +163,18 @@ public class SettingController {
             case "autoLaunch" -> {
                 CaptureProperties.autoLaunch = autoLaunch.isSelected();
             }
-
+            case "isShiftNeeded"->{
+                CaptureProperties.isShiftNeeded = isShiftNeeded.isSelected();
+            }
+            case "isAltNeeded"->{
+                CaptureProperties.isAltNeeded = isAltNeeded.isSelected();
+            }
+            case "isCtrlNeeded"->{
+                CaptureProperties.isCtrlNeeded = isCtrlNeeded.isSelected();
+            }
+            case "scaleOnMouse"->{
+                CaptureProperties.scaleOnMouse = scaleOnMouse.isSelected();
+            }
         }
 
     }
@@ -225,21 +190,7 @@ public class SettingController {
         reset.setSelected(isSelected);
         clearHistory.setSelected(isSelected);
         drag.setSelected(isSelected);
-        pencil.setSelected(isSelected);
         rubber.setSelected(isSelected);
-        rect.setSelected(isSelected);
-        filledRect.setSelected(isSelected);
-        oval.setSelected(isSelected);
-        arrow.setSelected(isSelected);
-        line.setSelected(isSelected);
-        wave.setSelected(isSelected);
-        color.setSelected(isSelected);
-        strokeUp.setSelected(isSelected);
-        strokeDown.setSelected(isSelected);
-        undo.setSelected(isSelected);
-        redo.setSelected(isSelected);
-        autoCopy.setSelected(isSelected);
-        autoLaunch.setSelected(isSelected);
     }
 
     @FXML
@@ -251,30 +202,25 @@ public class SettingController {
     @FXML
     private void saveAsFile() {
         if (autoLaunch.isSelected() && !CaptureProperties.autoLaunchEnabled) {
-            if (CaptureProperties.exePath != null && !CaptureProperties.exePath.isEmpty() && !CaptureProperties.exePath.isBlank()) {
-                registerReg(CaptureProperties.exePath, new File(CaptureProperties.exePath).getParent());
+            if (!CaptureProperties.exePath.isBlank()&&!new File(CaptureProperties.exePath).isFile()) {
+                shouldRegister = true;
+                CaptureProperties.autoLaunchEnabled = true;
             } else {
                 FileChooser fc = new FileChooser();
-                fc.setInitialDirectory(new File(CaptureProperties.selectPath));
+                fc.setInitialDirectory(CaptureProperties.getSelectDirectory());
                 fc.setTitle("选择安装目录下的CaptureTool.exe文件");
                 File f = fc.showOpenDialog(parent);
                 if (f != null) {
                     CaptureProperties.updateSelectPath(f.getAbsolutePath());
                     CaptureProperties.exePath = f.getAbsolutePath();
-                    registerReg(f.getAbsolutePath(), f.getParent());
+                    shouldRegister = true;
+                    CaptureProperties.autoLaunchEnabled = true;
                 }
             }
-            CaptureProperties.autoLaunchEnabled = true;
-        }else{
-            if(!autoLaunch.isSelected()){
-                CaptureProperties.autoLaunchEnabled=false;
-                unRegisterReg();
-            }
         }
-
         // save settings to file here
         FileChooser chooser = new FileChooser();
-        chooser.setInitialDirectory(new File(CaptureProperties.selectPath));
+        chooser.setInitialDirectory(CaptureProperties.getSelectDirectory());
         chooser.setInitialFileName("config.txt");
         chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("文本文件", "txt"));
         chooser.setTitle("Save configurations as file");
@@ -299,6 +245,16 @@ public class SettingController {
                 throw new RuntimeException(e);
             }
         }
+        Platform.runLater(() -> {
+            if (shouldRegister) {
+                registerReg(CaptureProperties.exePath, new File(CaptureProperties.exePath).getParent());
+            } else {
+                if(!autoLaunch.isSelected()){
+                    unRegisterReg();
+                }
+            }
+            shouldRegister=false;
+        });
     }
 
     @Override
@@ -314,19 +270,7 @@ public class SettingController {
                 "\n reset=" + reset.isSelected() +
                 "\n clearHistory=" + clearHistory.isSelected() +
                 "\n drag=" + drag.isSelected() +
-                "\n pencil=" + pencil.isSelected() +
                 "\n rubber=" + rubber.isSelected() +
-                "\n rect=" + rect.isSelected() +
-                "\n filledRect=" + filledRect.isSelected() +
-                "\n oval=" + oval.isSelected() +
-                "\n arrow=" + arrow.isSelected() +
-                "\n line=" + line.isSelected() +
-                "\n wave=" + wave.isSelected() +
-                "\n color=" + color.isSelected() +
-                "\n strokeUp=" + strokeUp.isSelected() +
-                "\n strokeDown=" + strokeDown.isSelected() +
-                "\n undo=" + undo.isSelected() +
-                "\n redo=" + redo.isSelected() +
                 "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
                 "\n autoCopy=" + autoCopy.isSelected() +
                 "\n autoSelect=" + autoSelect.isSelected() +
@@ -334,28 +278,31 @@ public class SettingController {
                 "\n autoLaunch=" + autoLaunch.isSelected() +
                 "\n exePath=" + CaptureProperties.exePath +
                 "\n autoLaunchEnabled=" + CaptureProperties.autoLaunchEnabled +
+                "\n logPath=" + CaptureProperties.logPath +
+                "\n scaleOnMouse=" + CaptureProperties.scaleOnMouse +
                 "\n}";
     }
 
     public void saveOnOriginalPath() {
         if (autoLaunch.isSelected() && !CaptureProperties.autoLaunchEnabled) {
-            if (CaptureProperties.exePath != null && !CaptureProperties.exePath.isEmpty() && !CaptureProperties.exePath.isBlank()) {
-                registerReg(CaptureProperties.exePath, new File(CaptureProperties.exePath).getParent());
+            if (!CaptureProperties.exePath.isBlank()&&!new File(CaptureProperties.exePath).isFile()) {
+                CaptureProperties.autoLaunchEnabled = true;
+                shouldRegister = true;
             } else {
                 FileChooser fc = new FileChooser();
-                fc.setInitialDirectory(new File(CaptureProperties.selectPath));
+                fc.setInitialDirectory(CaptureProperties.getSelectDirectory());
                 fc.setTitle("选择安装目录下的CaptureTool.exe文件");
                 File f = fc.showOpenDialog(parent);
                 if (f != null) {
                     CaptureProperties.exePath = f.getAbsolutePath();
-                    registerReg(f.getAbsolutePath(), f.getParent());
+                    CaptureProperties.autoLaunchEnabled = true;
+                    shouldRegister = true;
                 }
             }
-            CaptureProperties.autoLaunchEnabled = true;
-        }else {
-            if(!autoLaunch.isSelected()){
-                CaptureProperties.autoLaunchEnabled=false;
-                unRegisterReg();
+        } else {
+            if (!autoLaunch.isSelected() && CaptureProperties.autoLaunchEnabled) {
+                CaptureProperties.autoLaunchEnabled = false;
+                shouldRegister = false;
             }
         }
         File f = new File(savePath.getText());
@@ -367,6 +314,16 @@ public class SettingController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        Platform.runLater(() -> {
+            if (shouldRegister) {
+                registerReg(CaptureProperties.exePath, new File(CaptureProperties.exePath).getParent());
+            } else {
+                if(!autoLaunch.isSelected()){
+                    unRegisterReg();
+                }
+            }
+            shouldRegister=false;
+        });
     }
 
     public void updateState(String value) {
@@ -376,8 +333,7 @@ public class SettingController {
     }
 
     public void registerReg(String path, String temp) {
-        path=path.replace("\\","\\\\");
-        System.out.println(path);
+        path = path.replace("\\", "\\\\");
         String regContent = String.format("""
                 Windows Registry Editor Version 5.00
                 [HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run]
@@ -386,8 +342,14 @@ public class SettingController {
         temp += "/autoLaunch.reg";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(temp))) {
             writer.write(regContent);
-            System.out.println(".reg file created: " + temp);
         } catch (IOException e) {
+            if (CaptureProperties.shouldLog && CaptureProperties.logPath != null) {
+                try (PrintWriter pw = new PrintWriter(new FileWriter(CaptureProperties.logPath, true), true)) {
+                    e.printStackTrace(pw);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
             e.printStackTrace();
             return;
         }
@@ -407,6 +369,13 @@ public class SettingController {
                 System.err.println("Failed to update registry. Exit code: " + exitCode);
             }
         } catch (IOException | InterruptedException e) {
+            if (CaptureProperties.shouldLog && CaptureProperties.logPath != null) {
+                try (PrintWriter pw = new PrintWriter(new FileWriter(CaptureProperties.logPath, true), true)) {
+                    e.printStackTrace(pw);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
             e.printStackTrace();
         }
     }
@@ -421,6 +390,13 @@ public class SettingController {
             process.waitFor();
             System.out.println("注册表键值已删除");
         } catch (IOException | InterruptedException e) {
+            if (CaptureProperties.shouldLog && CaptureProperties.logPath != null) {
+                try (PrintWriter pw = new PrintWriter(new FileWriter(CaptureProperties.logPath, true), true)) {
+                    e.printStackTrace(pw);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
             e.printStackTrace();
         }
     }

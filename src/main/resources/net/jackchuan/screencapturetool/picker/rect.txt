@@ -1,0 +1,8 @@
+assets/icon/rect.png
+assets/icon/filled_rect.png
+assets/icon/rect_round.png
+assets/icon/rect_round_filled.png
+assets/icon/rect_round_dashed.png
+assets/icon/rect_round_dashed_filled.png
+assets/icon/rect_dashed.png
+assets/icon/rect_filled_dashed.png

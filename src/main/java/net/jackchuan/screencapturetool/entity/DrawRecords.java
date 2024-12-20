@@ -78,6 +78,9 @@ public class DrawRecords {
         gc.setStroke(color);
         gc.setFill(color);
         switch (drawType) {
+            case "common"->{
+
+            }
             case "rect" -> {
                 DrawType.RECTANGLE.draw(gc, startX, startY, endX, endY);
             }
@@ -85,7 +88,7 @@ public class DrawRecords {
                 DrawType.FILLED_RECTANGLE.draw(gc, startX, startY, endX, endY, color);
             }
             case "arrow" -> {
-                DrawType.ARROW.draw(gc, startX, startY, endX, endY, color);
+                DrawType.ARROW.draw(gc, startX, startY, endX, endY);
             }
             case "line" -> {
                 DrawType.LINE.draw(gc, startX, startY, endX, endY);
@@ -98,6 +101,54 @@ public class DrawRecords {
             }
             case "filledOval" -> {
                 DrawType.FILLED_CIRCLE.draw(gc, startX, startY, endX, endY, color);
+            }
+            case "lineDashed"->{
+                DrawType.LINE_DASHED.draw(gc, startX, startY, endX, endY);
+            }
+            case "lineDouble"->{
+                DrawType.LINE_DOUBLE.draw(gc, startX, startY, endX, endY);
+            }
+            case "rectRound"->{
+                DrawType.RECTANGLE_ROUND.draw(gc, startX, startY, endX, endY);
+            }
+            case "rectRoundFilled"->{
+                DrawType.RECTANGLE_ROUND_FILLED.draw(gc, startX, startY, endX, endY,color);
+            }
+            case "arrowDashed"->{
+                DrawType.ARROW_DASHED.draw(gc, startX, startY, endX, endY);
+            }
+            case "arrowFilled"->{
+                DrawType.ARROW_FILLED.draw(gc, startX, startY, endX, endY,color);
+            }
+            case "arrowEmpty"->{
+                DrawType.ARROW_EMPTY.draw(gc, startX, startY, endX, endY);
+            }
+            case "arrowTwoDir"->{
+                DrawType.ARROW_TWO_DIR.draw(gc, startX, startY, endX, endY);
+            }
+            case "arrowDouble"->{
+                DrawType.ARROW_DOUBLE.draw(gc, startX, startY, endX, endY);
+            }
+            case "ovalDashed"->{
+                DrawType.OVAL_DASHED.draw(gc, startX, startY, endX, endY);
+            }
+            case "arrowDoubleDashed"->{
+                DrawType.ARROW_DOUBLE_DASHED.draw(gc, startX, startY, endX, endY);
+            }
+            case "arrowDoubleTwo"->{
+                DrawType.ARROW_DOUBLE_TWO_DIR.draw(gc, startX, startY, endX, endY);
+            }
+            case "rectRoundDashed"->{
+                DrawType.RECTANGLE_ROUND_DASHED.draw(gc, startX, startY, endX, endY);
+            }
+            case "rectRoundDashedFilled"->{
+                DrawType.RECTANGLE_ROUND_DASHED_FILLED.draw(gc, startX, startY, endX, endY,color);
+            }
+            case "rectDashed"->{
+                DrawType.RECTANGLE_DASHED.draw(gc, startX, startY, endX, endY);
+            }
+            case "rectDashedFilled"->{
+                DrawType.RECTANGLE_DASHED_FILLED.draw(gc, startX, startY, endX, endY,color);
             }
             case "externalImg" -> {
                 updateExternalImage(gc, animatorGc);
