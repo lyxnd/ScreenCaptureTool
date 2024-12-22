@@ -5,6 +5,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import net.jackchuan.screencapturetool.external.ExternalImageHandler.DrawableImage;
+import net.jackchuan.screencapturetool.external.ExternalTextHandler.DrawableText;
 import net.jackchuan.screencapturetool.util.impl.DrawType;
 
 
@@ -27,10 +28,24 @@ public class DrawRecords {
     private boolean shouldRender = true;
     private String detailInfo;
     private DrawableImage drawableImage;
+    private DrawableText drawableText;
     private long editTick;
     private boolean shouldRepaint;
+    private String text;
 
     public DrawRecords() {
+    }
+
+    public DrawRecords(String drawType, DrawableText text, String detail, long tick) {
+        this.drawType = drawType;
+        this.drawableText = text;
+        setStartX(text.getX());
+        setStartY(text.getY());
+        setWidth(text.getWidth());
+        setHeight(text.getHeight());
+        setText(text.getValue());
+        setDetailInfo(detail);
+        setEditTick(tick);
     }
 
     @Override
@@ -153,6 +168,29 @@ public class DrawRecords {
             case "externalImg" -> {
                 updateExternalImage(gc, animatorGc);
             }
+            case "externalText" -> {
+                updateExternalText(gc, animatorGc);
+            }
+        }
+    }
+
+    private void updateExternalText(GraphicsContext gc, GraphicsContext animatorGc) {
+        if (!isShouldRepaint()) {
+            return;
+        }
+        if(drawableText.shouldRenderBorder()){
+            gc.setStroke(Color.CYAN);
+            gc.setLineWidth(3);
+            gc.strokeRect(getStartX()-10, getStartY()-20, getWidth(), getHeight());
+        }
+        if(isShouldRender()){
+            gc.setFont(drawableText.getFont());
+            gc.setStroke(drawableText.getColor());
+            gc.strokeText(getText(), getStartX(), getStartY());
+        }else {
+            animatorGc.setFont(drawableText.getFont());
+            animatorGc.setStroke(drawableText.getColor());
+            animatorGc.strokeText(getText(), getStartX(), getStartY());
         }
     }
 
@@ -196,6 +234,14 @@ public class DrawRecords {
         this.width = width;
     }
 
+    public DrawableText getDrawableText() {
+        return drawableText;
+    }
+
+    public void setDrawableText(DrawableText drawableText) {
+        this.drawableText = drawableText;
+    }
+
     public void setHeight(double height) {
         this.height = height;
     }
@@ -211,6 +257,14 @@ public class DrawRecords {
 
     public long getEditTick() {
         return editTick;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
     public void setEditTick(long editTick) {
@@ -323,6 +377,7 @@ public class DrawRecords {
     @Override
     public String toString() {
         String pos = drawableImage==null? "empty" : drawableImage.getX()+"\t"+drawableImage.getY();
+        String pos1 = drawableText==null? "empty" : drawableText.getX()+"\t"+drawableText.getY();
         return "DrawRecords{" +
                 "drawType='" + drawType + '\'' +
                 ", startX=" + startX +
@@ -334,6 +389,8 @@ public class DrawRecords {
                 ", detailInfo='" + detailInfo + '\'' +
                 ", editTick=" + editTick +
                 ", shouldRepaint=" + shouldRepaint +
+                ", text=" + text +
+                ", textPos=" + pos1 +
                 '}';
     }
 }

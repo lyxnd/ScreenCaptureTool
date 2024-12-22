@@ -124,6 +124,7 @@ public class ExternalImageHandler {
         double oriX, oriY;
         private String name;
         private boolean shouldRender,renderBorder;
+        private boolean isUndo;
         public DrawableImage(Image image, double x, double y, double width, double height,String name) {
             this.image = image;
             this.x = x;
@@ -194,6 +195,14 @@ public class ExternalImageHandler {
 
         public double getY() {
             return y;
+        }
+
+        public void setUndo(boolean undo) {
+            isUndo = undo;
+        }
+
+        public boolean isUndo() {
+            return isUndo;
         }
 
         public String getName() {

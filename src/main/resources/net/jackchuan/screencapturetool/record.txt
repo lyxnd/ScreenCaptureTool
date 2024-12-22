@@ -11,4 +11,5 @@
     初始截图部分的自动选择功能
     开机自启动功能 ----------------finished
     saveCurrentState需要修改
+    onMousePressed 中选择图片或文字有问题，会出现多个同时被选中
 }

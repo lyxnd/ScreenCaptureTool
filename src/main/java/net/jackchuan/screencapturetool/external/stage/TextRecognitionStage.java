@@ -36,7 +36,7 @@ public class TextRecognitionStage extends Stage {
         textArea=new TextArea(text);
         scrollPane=new ScrollPane(textArea);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         vBox.getChildren().addAll(flowPane,scrollPane);
         scene=new Scene(vBox,400,400);
 

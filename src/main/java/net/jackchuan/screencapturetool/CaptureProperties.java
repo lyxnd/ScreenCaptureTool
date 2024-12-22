@@ -1,4 +1,7 @@
 package net.jackchuan.screencapturetool;
+import javafx.application.Platform;
+import javafx.stage.FileChooser;
+import net.jackchuan.screencapturetool.network.HttpRequestHandler;
 import net.jackchuan.screencapturetool.util.ScreenCaptureUtil;
 import java.awt.*;
 import java.io.*;
@@ -38,6 +41,8 @@ public class CaptureProperties {
     public static double scale;
     public static double width;
     public static double height;
+    public static boolean ocrFileInstalled=false;
+    public static String ocrPath;
 
     static {
         Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
@@ -168,6 +173,12 @@ public class CaptureProperties {
             case "logPath"->{
                 logPath= value;
             }
+            case "ocrPath"->{
+                ocrPath= value;
+            }
+            case "ocrFileInstalled"->{
+                ocrFileInstalled= Boolean.parseBoolean(value);
+            }
         }
 
     }
@@ -224,11 +235,42 @@ public class CaptureProperties {
                 "\n autoLaunchEnabled=" + autoLaunchEnabled +
                 "\n logPath=" + logPath +
                 "\n scaleOnMouse=" + scaleOnMouse +
+                "\n ocrFileInstalled=" + ocrFileInstalled +
+                "\n ocrPath=" + ocrPath +
                 "\n}";
     }
-
-    public static boolean checkOCR() {
+    public static void saveOnOriginalPath() {
+        File f = new File(configPath);
+        f.setWritable(true);
+        try (FileWriter writer1 = new FileWriter(f)) {
+            writer1.write(toConfigString());
+            f.setWritable(false);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public static boolean checkOCR() throws IOException {
         //TODO install ocr
+        if(ocrFileInstalled){
+
+            return true;
+        }else {
+            if(!exePath.isBlank()){
+
+            }else{
+                FileChooser chooser=new FileChooser();
+                chooser.setTitle("选择下载保存路径");
+                chooser.setInitialDirectory(new File("D:/"));
+                File file = chooser.showSaveDialog(null);
+                if(file!=null){
+                    ocrPath=file.getAbsolutePath();
+                    String url="";
+                    HttpRequestHandler.downloadFile(url,ocrPath);
+                    ocrFileInstalled=true;
+                    saveOnOriginalPath();
+                }
+            }
+        }
         return true;
     }
 }

@@ -12,7 +12,6 @@ import java.util.ArrayList;
  */
 public class ResourceLoader {
     public static ArrayList<String> getAsLines(String path) throws IOException {
-        System.out.println(path);
         InputStream inputStream = ScreenCaptureToolApp.class.getResourceAsStream(path);
         if(inputStream==null){
             return null;
