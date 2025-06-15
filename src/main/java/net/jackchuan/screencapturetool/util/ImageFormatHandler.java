@@ -2,9 +2,8 @@ package net.jackchuan.screencapturetool.util;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.image.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import org.opencv.core.CvType;
@@ -12,7 +11,7 @@ import org.opencv.core.Mat;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
+import java.nio.IntBuffer;
 
 /**
  * 功能：
@@ -21,6 +20,63 @@ import java.io.IOException;
  */
 public class ImageFormatHandler {
 
+    public static WritableImage toFXImage(BufferedImage bImage) {
+        int width = bImage.getWidth();
+        int height = bImage.getHeight();
+        WritableImage wr = new WritableImage(width, height);
+        PixelWriter pw = wr.getPixelWriter();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int argb = bImage.getRGB(x, y); // 包含 alpha
+                pw.setArgb(x, y, argb);
+            }
+        }
+        return wr;
+    }
+
+    public static BufferedImage toBufferedImage(Image fxImage) {
+        int width = (int) fxImage.getWidth();
+        int height = (int) fxImage.getHeight();
+
+        // 创建一个 ARGB 类型的 BufferedImage
+        BufferedImage bimg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        // 获取 JavaFX 图像的像素读取器
+        PixelReader pixelReader = fxImage.getPixelReader();
+        if (pixelReader == null) {
+            throw new IllegalArgumentException("Image has no PixelReader");
+        }
+
+        // 准备缓冲区
+        int[] buffer = new int[width];
+        WritablePixelFormat<IntBuffer> format = WritablePixelFormat.getIntArgbInstance();
+
+        // 每行逐行复制
+        for (int y = 0; y < height; y++) {
+            pixelReader.getPixels(0, y, width, 1, format, buffer, 0, width);
+            bimg.getRaster().setDataElements(0, y, width, 1, buffer);
+        }
+
+        return bimg;
+    }
+
+    public static BufferedImage cropImage(Canvas canvas,double startX,double startY,double currentX,double currentY){
+        //TODO 裁剪不准确
+        double imageStartX = (startX - canvas.getTranslateX()) / canvas.getScaleX();
+        double imageStartY = (startY - canvas.getTranslateY()) / canvas.getScaleY();
+        double imageEndX = (currentX - canvas.getTranslateX()) / canvas.getScaleX();
+        double imageEndY = (currentY - canvas.getTranslateY()) / canvas.getScaleY();
+        // 计算矩形区域的宽度和高度
+        int width = (int) Math.abs(imageEndX - imageStartX);
+        int height = (int) Math.abs(imageEndY - imageStartY);
+        // 确保起始点为左上角的坐标
+        int x = (int) Math.min(imageStartX, imageEndX);
+        int y = (int) Math.min(imageStartY, imageEndY);
+        BufferedImage bf = SwingFXUtils.fromFXImage(canvas.snapshot(null, null), null);
+        return bf.getSubimage(x, y, width, height);
+    }
+
     public static WritableImage getTransparentImage(Canvas editArea) {
         Image image = new Image(ScreenCaptureToolApp.class.getResource("assets/transparent.png").toExternalForm());
         // 将 Image 转换为 WritableImage
@@ -28,13 +84,6 @@ public class ImageFormatHandler {
         return writableImage;
     }
 
-    public static BufferedImage fxImageToBufferedImage(Image writableImage) {
-        return SwingFXUtils.fromFXImage(writableImage, null);
-    }
-
-    public static Image bufferedToFXImage(BufferedImage screenshot) throws IOException {
-        return SwingFXUtils.toFXImage(screenshot, null);
-    }
 
     //awt Image to BufferedImage
     public static BufferedImage convertToBufferedImage(java.awt.Image image) {

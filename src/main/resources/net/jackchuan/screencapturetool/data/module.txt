@@ -1,0 +1,29 @@
+module net.sourceforge.lept4j {
+    requires com.sun.jna;
+    requires org.apache.commons.io;
+    requires jai.imageio.core;
+    requires java.desktop;
+    requires java.logging;
+
+    exports net.sourceforge.lept4j;
+    exports net.sourceforge.lept4j.util;
+    exports com.ochafik.lang.jnaerator.runtime;
+}
+
+
+ module net.sourceforge.tess4j {
+       requires com.sun.jna;
+       requires jai.imageio.core;
+       requires java.desktop;
+       requires java.xml;
+       requires net.sourceforge.lept4j;
+       requires org.apache.commons.io;
+       requires org.apache.pdfbox;
+       requires org.apache.pdfbox.io;
+       requires org.apache.pdfbox.tools;
+       requires org.slf4j;
+
+       exports net.sourceforge.tess4j;
+       exports net.sourceforge.tess4j.util;
+       exports com.recognition.software.jdeskew;
+ }

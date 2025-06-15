@@ -12,4 +12,5 @@
     开机自启动功能 ----------------finished
     saveCurrentState需要修改
     onMousePressed 中选择图片或文字有问题，会出现多个同时被选中
+    ocr依赖不全，打包后缺少image-io-core，未模块化
 }

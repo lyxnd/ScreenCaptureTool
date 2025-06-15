@@ -1,0 +1,2 @@
+assets/icon/ocr_full.png
+assets/icon/ocr_select.png

@@ -1,4 +1,4 @@
-package net.jackchuan.screencapturetool.util;
+package net.jackchuan.screencapturetool.entity;
 
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 import net.jackchuan.screencapturetool.controller.EditRecordController;

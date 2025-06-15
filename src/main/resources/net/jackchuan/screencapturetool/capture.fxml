@@ -12,6 +12,7 @@
 <?import net.jackchuan.screencapturetool.external.picker.RectanglePicker?>
 <?import net.jackchuan.screencapturetool.external.picker.OvalPicker?>
 <?import net.jackchuan.screencapturetool.external.picker.LinePicker?>
+<?import net.jackchuan.screencapturetool.external.picker.OCRPicker?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="net.jackchuan.screencapturetool.controller.CaptureDisplayController"
@@ -106,6 +107,27 @@
                 </tooltip>
             </Button>
             <Separator/>
+            <OCRPicker styleClass="icon-button" fx:id="ocr">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/ocr.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="Optical Character Recognition(Maybe not as accurate as excepted 😭)" styleClass="custom-tooltip"/>
+                </tooltip>
+            </OCRPicker>
+
+            <Button styleClass="icon-button" onAction="#tailorMode" fx:id="tailor">
+                <graphic>
+                    <ImageView fitHeight="20" fitWidth="20">
+                        <Image url="@../screencapturetool/assets/icon/tailor.png"/>
+                    </ImageView>
+                </graphic>
+                <tooltip>
+                    <Tooltip text="crop image" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Button>
 
             <Button styleClass="icon-button" onAction="#dragMode" fx:id="drag">
                 <graphic>
@@ -194,17 +216,6 @@
                 </graphic>
                 <tooltip>
                     <Tooltip text="add text" styleClass="custom-tooltip"/>
-                </tooltip>
-            </Button>
-
-            <Button styleClass="icon-button" onAction="#textDetection" fx:id="ocr">
-                <graphic>
-                    <ImageView fitHeight="20" fitWidth="20">
-                        <Image url="@../screencapturetool/assets/icon/ocr.png"/>
-                    </ImageView>
-                </graphic>
-                <tooltip>
-                    <Tooltip text="Optical Character Recognition" styleClass="custom-tooltip"/>
                 </tooltip>
             </Button>
 

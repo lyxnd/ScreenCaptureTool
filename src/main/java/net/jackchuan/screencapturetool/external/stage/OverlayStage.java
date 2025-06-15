@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -46,6 +47,7 @@ public class OverlayStage extends Stage {
     private GraphicsContext gc;
     private Stage displayStage;
     private double startX, startY, endX, endY;
+    private double preX=-100,preY=-100;
     private ContextMenu popMenu;
     private MenuItem fullCut,test,test1;
     private Pair<Integer, Integer> size;
@@ -74,6 +76,7 @@ public class OverlayStage extends Stage {
         this.setAlwaysOnTop(true);
     }
     public OverlayStage(Image image){
+        this.image=image;
         size = ScreenCaptureUtil.getScreenSize(ScreenCaptureUtil.DEFAULT_SIZE);
         canvas=new Canvas(size.getKey(),size.getValue());
         gc=canvas.getGraphicsContext2D();
@@ -111,7 +114,7 @@ public class OverlayStage extends Stage {
         test.setOnAction(e->{
             closeOverlayStage();
             Image snapshot = captureAndShowScreenshot(0,0,size.getKey(),size.getValue(),false);
-            BufferedImage image = ImageFormatHandler.fxImageToBufferedImage(snapshot);
+            BufferedImage image = ImageFormatHandler.toBufferedImage(snapshot);
             try {
                 ImageIO.write(image,"png",new File("F:/java_practise/ScreenCaptureTool/temp/test.png"));
             } catch (IOException ex) {
@@ -133,6 +136,17 @@ public class OverlayStage extends Stage {
         });
         canvas.setOnMouseMoved(e -> {
             //TODO
+            if(CaptureProperties.autoSelect){
+                if(preX==-100||preY==-100){
+                    preX=e.getX();
+                    preY=e.getY();
+                }
+                double deltaX=e.getX()-preX;
+                double deltaY=e.getY()-preY;
+                if(deltaX>=50||deltaY>=50){
+                    handleSelectArea();
+                }
+            }
         });
 
         canvas.setOnMouseDragged(e -> {
@@ -158,6 +172,15 @@ public class OverlayStage extends Stage {
 
         });
     }
+
+    private void handleSelectArea() {
+        CompletableFuture.supplyAsync(() -> ImageDetector.detectRect(image)).thenAccept(result -> {
+            // 在任务完成后处理结果
+            gc.clearRect(0,0,canvas.getWidth(),canvas.getHeight());
+            gc.drawImage(result,0,0,canvas.getWidth(),canvas.getHeight());
+        });
+    }
+
     private Image captureAndShowScreenshot(int x, int y, int width, int height,boolean show) {
         javafx.scene.image.Image fxImage;
         try {
@@ -178,7 +201,7 @@ public class OverlayStage extends Stage {
                 return null;
             }
             // 转换为 JavaFX Image
-            fxImage = ImageFormatHandler.bufferedToFXImage(screenshot);
+            fxImage = ImageFormatHandler.toFXImage(screenshot);
             // 显示截图弹窗
             if(show){
                 showScreenshotPopup(fxImage);
@@ -202,25 +225,10 @@ public class OverlayStage extends Stage {
             throw new RuntimeException(e);
         }
         scene.getStylesheets().add(ScreenCaptureToolApp.class.getResource("assets/css/style.css").toExternalForm());
-        // 创建 ImageView 来显示图片
-        javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(image);
-        imageView.setPreserveRatio(true);  // 保持宽高比
-        // 获取图片的实际宽高
-        double imageWidth = image.getWidth();
-        double imageHeight = image.getHeight();
-        double scale = ScreenCaptureUtil.getScreenScale();
-        //TODO
-        //应该调整使得显示的窗口大小合适，且图像缩放也合适
-        imageView.setFitWidth(imageWidth/scale);//scale*0.9f
-        imageView.setFitHeight(imageHeight/scale);
-        // 动态设置 displayStage 的大小
-        displayStage.setWidth(imageView.getFitWidth());
-        displayStage.setHeight(imageView.getFitHeight() + 100);
-
         // 设置控制器
         CaptureDisplayController controller = loader.getController();
-        controller.setCapture(imageView);
-
+        controller.setCapture(image,true);
+        controller.setOriginalImage(image);
         // 设置场景并显示窗口
         displayStage.setScene(scene);
         displayStage.show();

@@ -22,18 +22,18 @@ import java.util.List;
  */
 public class ImageDetector {
 
-    public static Rect detectRect(Image image){
+    public static Image detectRect(Image image){
         Mat originalImage = ImageFormatHandler.toMat(image);
         Mat resizedImage = new Mat();
         double scaleFactor=0.4;
         Imgproc.resize(originalImage, resizedImage, new Size(originalImage.cols() * scaleFactor, originalImage.rows() * scaleFactor));
-        displayProcess(resizedImage,"缩小处理图像");
+//        displayProcess(resizedImage,"缩小处理图像");
         Mat grayImage = new Mat();
         Imgproc.cvtColor(resizedImage, grayImage, Imgproc.COLOR_BGR2GRAY);
-        displayProcess(grayImage,"灰化处理图像");
+//        displayProcess(grayImage,"灰化处理图像");
         Mat edges = new Mat();
         Imgproc.Canny(grayImage, edges, 50, 150);
-        displayProcess(edges,"边缘提取图片");
+//        displayProcess(edges,"边缘提取图片");
 
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -59,8 +59,8 @@ public class ImageDetector {
                 }
             }
         }
-        displayProcess(resizedImage,"提取后的图片");
-        return null;
+//        displayProcess(resizedImage,"提取后的图片");
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(resizedImage),null);
     }
 
 

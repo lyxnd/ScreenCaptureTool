@@ -1,11 +1,20 @@
 package net.jackchuan.screencapturetool;
-import javafx.application.Platform;
-import javafx.stage.FileChooser;
+
+import javafx.concurrent.Task;
+import javafx.stage.DirectoryChooser;
+import net.jackchuan.screencapturetool.entity.ControllerInstance;
+import net.jackchuan.screencapturetool.external.stage.AlertHelper;
+import net.jackchuan.screencapturetool.external.stage.ProgressStage;
 import net.jackchuan.screencapturetool.network.HttpRequestHandler;
+import net.jackchuan.screencapturetool.util.FileHandler;
 import net.jackchuan.screencapturetool.util.ScreenCaptureUtil;
+
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 /**
@@ -43,6 +52,7 @@ public class CaptureProperties {
     public static double height;
     public static boolean ocrFileInstalled=false;
     public static String ocrPath;
+    public static boolean showSettings=true;
 
     static {
         Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
@@ -68,7 +78,6 @@ public class CaptureProperties {
         if(file.exists()){
             try(BufferedReader reader=new BufferedReader(new FileReader(file))){
                 configPath = reader.readLine();
-                System.out.println(configPath);
                 if("configuration.txt".equals(configPath)){
                     readFromJar();
                 }else {
@@ -77,7 +86,17 @@ public class CaptureProperties {
                     for (String line :list){
                         if (line.contains("=")) {
                             String[] pair = line.split("=");
-                            updateSettings(pair[0].trim(),pair[1].trim());
+                            boolean blank = false;
+                            for(String s:pair){
+                                if(s.isBlank()){
+                                    blank=true;
+                                    break;
+                                }
+                            }
+                            if(!blank&&pair.length==2){
+                                updateSettings(pair[0].trim(),pair[1].trim());
+                            }
+
                         }
                     }
                 }
@@ -173,11 +192,14 @@ public class CaptureProperties {
             case "logPath"->{
                 logPath= value;
             }
-            case "ocrPath"->{
+            case "ocrDataPath"->{
                 ocrPath= value;
             }
             case "ocrFileInstalled"->{
                 ocrFileInstalled= Boolean.parseBoolean(value);
+            }
+            case "showSettings"->{
+                showSettings= Boolean.parseBoolean(value);
             }
         }
 
@@ -236,7 +258,7 @@ public class CaptureProperties {
                 "\n logPath=" + logPath +
                 "\n scaleOnMouse=" + scaleOnMouse +
                 "\n ocrFileInstalled=" + ocrFileInstalled +
-                "\n ocrPath=" + ocrPath +
+                "\n ocrDataPath=" + ocrPath +
                 "\n}";
     }
     public static void saveOnOriginalPath() {
@@ -252,22 +274,53 @@ public class CaptureProperties {
     public static boolean checkOCR() throws IOException {
         //TODO install ocr
         if(ocrFileInstalled){
-
             return true;
         }else {
+            if(!AlertHelper.showConfirmAlert("Library error","Could not find tessdata files",
+                    "Click ok to install tessdata files")){
+                return false;
+            }
             if(!exePath.isBlank()){
-
+                String url="https://github.com/lyxnd/temp/archive/refs/heads/main.zip";
+                Task<Void> taskThread = new Task<>() {
+                    @Override
+                    protected Void call() throws IOException, NoSuchAlgorithmException, KeyManagementException {
+                        String path = HttpRequestHandler.downloadFile(url, new File(exePath).getParent()+"/tessdata.zip");
+                        FileHandler.unzip(path,new File(exePath).getParent());
+                        Path path1=Path.of(new File(exePath).getParent(),"tessdata","temp-main");
+                        Path path2=Path.of(new File(exePath).getParent(),"tessdata");
+                        FileHandler.moveToAnotherDirectory(path1,path2);
+                        return null;
+                    }
+                };
+                ProgressStage progressStage=new ProgressStage("下载进度",
+                        ControllerInstance.getInstance().getController().getParent(),taskThread);
+                progressStage.setOcrPath(new File(exePath).getParent()+"/tessdata");
+                progressStage.show();
+                progressStage.startTask();
             }else{
-                FileChooser chooser=new FileChooser();
+                DirectoryChooser chooser=new DirectoryChooser();
                 chooser.setTitle("选择下载保存路径");
                 chooser.setInitialDirectory(new File("D:/"));
-                File file = chooser.showSaveDialog(null);
+                File file = chooser.showDialog(null);
                 if(file!=null){
-                    ocrPath=file.getAbsolutePath();
-                    String url="";
-                    HttpRequestHandler.downloadFile(url,ocrPath);
-                    ocrFileInstalled=true;
-                    saveOnOriginalPath();
+                    String url="https://github.com/lyxnd/temp/archive/refs/heads/main.zip";
+                    Task<Void> taskThread = new Task<>() {
+                        @Override
+                        protected Void call() throws IOException, NoSuchAlgorithmException, KeyManagementException {
+                            String path = HttpRequestHandler.downloadFile(url, file.getAbsolutePath()+"/tessdata.zip");
+                            FileHandler.unzip(path,file.getAbsolutePath()+"/tessdata");
+                            Path path1= Path.of(file.getAbsolutePath(),"tessdata","temp-main");
+                            Path path2=Path.of(file.getAbsolutePath(),"tessdata");
+                            FileHandler.moveToAnotherDirectory(path1,path2);
+                            return null;
+                        }
+                    };
+                    ProgressStage progressStage=new ProgressStage("下载进度",
+                            ControllerInstance.getInstance().getController().getParent(),taskThread);
+                    progressStage.show();
+                    progressStage.setOcrPath(file.getAbsolutePath()+"/tessdata");
+                    progressStage.startTask();
                 }
             }
         }

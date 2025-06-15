@@ -1,7 +1,6 @@
 package net.jackchuan.screencapturetool.controller;
 
 import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
@@ -31,8 +30,8 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import net.jackchuan.screencapturetool.CaptureProperties;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
+import net.jackchuan.screencapturetool.entity.ControllerInstance;
 import net.jackchuan.screencapturetool.entity.DrawRecords;
-
 import net.jackchuan.screencapturetool.external.ExternalImageHandler;
 import net.jackchuan.screencapturetool.external.ExternalImageHandler.DrawableImage;
 import net.jackchuan.screencapturetool.external.ExternalTextHandler;
@@ -40,25 +39,30 @@ import net.jackchuan.screencapturetool.external.ExternalTextHandler.DrawableText
 import net.jackchuan.screencapturetool.external.ToolBarManager;
 import net.jackchuan.screencapturetool.external.pane.TextFieldPane;
 import net.jackchuan.screencapturetool.external.picker.*;
+import net.jackchuan.screencapturetool.external.stage.AlertHelper;
 import net.jackchuan.screencapturetool.external.stage.TextRecognitionStage;
 import net.jackchuan.screencapturetool.util.*;
 import net.jackchuan.screencapturetool.util.impl.CornerType;
 import net.jackchuan.screencapturetool.util.impl.DrawType;
-import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 功能：
@@ -82,9 +86,9 @@ public class CaptureDisplayController {
     @FXML
     private ToolBar tools;
     @FXML
-    private Button upload, createEmpty, save, copy, undo, redo, reset, clear, drag, pencil, rubber, addImage, ocr, addText, process, setting, exit;
+    private Button upload, createEmpty, save, copy, undo, redo, tailor, reset, clear, drag, pencil, rubber, addImage, addText, process, setting, exit;
     @FXML
-    private CustomPicker arrow, rect, line, oval;
+    private CustomPicker arrow, rect, line, oval, ocr;
     private Color forecolor = Color.RED;
     private int type = -2, oriType, stroke;
     private double initialX, initialY, startX, startY;
@@ -108,8 +112,8 @@ public class CaptureDisplayController {
     private TextFieldPane textPane;
     private ToolBarManager toolbarManager;
     private TextRecognitionStage textStage;
-    private ITesseract tess;
     private Font font;
+    private ExecutorService executor;
 
     @FXML
     public void initialize() throws IOException {
@@ -126,7 +130,7 @@ public class CaptureDisplayController {
         editArea.setId("editArea");
         animator.setId("animator");
         imageHandler = new ExternalImageHandler(editArea, animator);
-        textHandler = new ExternalTextHandler(editArea,animator);
+        textHandler = new ExternalTextHandler(editArea, animator);
         stackPane.getChildren().addAll(editArea, animator);
         canvas.setVisible(true);
         editArea.setVisible(true);
@@ -181,6 +185,7 @@ public class CaptureDisplayController {
                 editArea.setOnMouseReleased(this::saveEditRecord);
             }
             ControllerInstance.getInstance().setController(this);
+            resizeStage();
         });
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.seconds(1), e -> {
@@ -190,25 +195,17 @@ public class CaptureDisplayController {
         timeline.play();
     }
 
-    @FXML
-    private void textDetection() throws IOException {
-        if(CaptureProperties.checkOCR()){
-            type = 27;
-            setCursorShape(Cursor.CROSSHAIR);
-        }
-    }
-
     private void changeToExternalMode(MouseEvent e) {
         if (type == 8 && selectedImage == null && e.getClickCount() == 2) {
             addExternalImage(e.getX(), e.getY());
         } else if (type == 9 && e.getClickCount() == 2) {
-            showTextInputArea(e.getX(),e.getY());
+            showTextInputArea(e.getX(), e.getY());
         }
     }
 
     private void initDrawType(MouseEvent event) {
         selectedImage = null;
-        selectedText=null;
+        selectedText = null;
         if (event.getButton() == MouseButton.SECONDARY) { // 右键
             popMenu.show(animator, event.getScreenX(), event.getScreenY());
         }
@@ -218,10 +215,10 @@ public class CaptureDisplayController {
         if (type == 0) {
             initialX = event.getSceneX();
             initialY = event.getSceneY();
-        } else if (type == 8&&event.getButton()==MouseButton.PRIMARY) {
+        } else if (type == 8 && event.getButton() == MouseButton.PRIMARY) {
             for (ExternalImageHandler.DrawableImage image : imageHandler.getImages()) {
-                System.out.println("isUndo = "+image.isUndo());
-                if (!image.isUndo()&&image.isInside(event.getX(), event.getY())) {
+                System.out.println("isUndo = " + image.isUndo());
+                if (!image.isUndo() && image.isInside(event.getX(), event.getY())) {
                     selectedImage = image;
                     dragStartX = event.getX();
                     dragStartY = event.getY();
@@ -241,14 +238,14 @@ public class CaptureDisplayController {
             clearCanvas(animator);
             if (selectedImage != null) {
                 imageHandler.updateImage(animator.getGraphicsContext2D(), selectedImage);
-                repaintCanvas(editArea.getGraphicsContext2D(), false,false,true);
+                repaintCanvas(editArea.getGraphicsContext2D(), false, false, true);
             }
-        } else if (type == 9&&event.getButton()==MouseButton.PRIMARY) {
-            if(textPane!=null&&!textPane.isInField(event)){
+        } else if (type == 9 && event.getButton() == MouseButton.PRIMARY) {
+            if (textPane != null && !textPane.isInField(event)) {
                 textPane.removeTextField();
             }
-            for(DrawableText text: textHandler.getTexts()){
-                if (!text.isUndo()&&text.isInside(event.getX(), event.getY())) {
+            for (DrawableText text : textHandler.getTexts()) {
+                if (!text.isUndo() && text.isInside(event.getX(), event.getY())) {
                     selectedText = text;
                     dragStartX = event.getX();
                     dragStartY = event.getY();
@@ -267,9 +264,9 @@ public class CaptureDisplayController {
             }
             clearCanvas(animator);
             if (selectedText != null) {
-                System.out.println("selectedText :"+selectedText.toString());
+                System.out.println("selectedText :" + selectedText.toString());
                 textHandler.updateText(animator.getGraphicsContext2D(), selectedText);
-                repaintCanvas(editArea.getGraphicsContext2D(), false,false, true);
+                repaintCanvas(editArea.getGraphicsContext2D(), false, false, true);
             }
         } else {
             startX = event.getX();
@@ -279,13 +276,13 @@ public class CaptureDisplayController {
 
     private void showTextInputArea(double x, double y) {
         if (textPane == null) {
-            textPane = new TextFieldPane(this,canvas.getWidth(), canvas.getHeight());
-            textPane.setTextFieldPos(x,y);
+            textPane = new TextFieldPane(this, canvas.getWidth(), canvas.getHeight());
+            textPane.setTextFieldPos(x, y);
             stackPane.getChildren().add(textPane);
             textPane.setVisible(true);
-        }else {
-            textPane.addTextField(selectedText!=null?selectedText.getValue():"",
-                    selectedText!=null?selectedText.getFont():new Font("Arial",16));
+        } else {
+            textPane.addTextField(selectedText != null ? selectedText.getValue() : "",
+                    selectedText != null ? selectedText.getFont() : new Font("Arial", 16));
         }
     }
 
@@ -298,7 +295,7 @@ public class CaptureDisplayController {
 
     private void drawPromotions(MouseEvent e) {
         String pos = "Mouse pos : (" + (int) e.getX() + "," + (int) e.getY() + ")  ";
-        pos += "Size : (" + (int)canvas.getWidth() + "," + (int)canvas.getHeight() + ")  ";
+        pos += "Size : (" + (int) canvas.getWidth() + "," + (int) canvas.getHeight() + ")  ";
         setState(pos);
         if (type == -1) {
             GraphicsContext editContext = animator.getGraphicsContext2D();
@@ -306,7 +303,7 @@ public class CaptureDisplayController {
             editContext.strokeRect(e.getX(), e.getY(), stroke * 10, stroke * 10);
         } else if (type == 8) {
             for (ExternalImageHandler.DrawableImage image : imageHandler.getImages()) {
-                if(!image.equals(selectedImage)){
+                if (!image.equals(selectedImage)) {
                     continue;
                 }
                 switch (imageHandler.isNearBorder(image, e.getX(), e.getY())) {
@@ -321,10 +318,9 @@ public class CaptureDisplayController {
                     case EMPTY -> editArea.setCursor(Cursor.HAND);
                 }
             }
-        }
-        else if(type==9){
+        } else if (type == 9) {
             for (DrawableText text : textHandler.getTexts()) {
-                if(!text.equals(selectedText)){
+                if (!text.equals(selectedText)) {
                     continue;
                 }
                 switch (textHandler.isNearBorder(text, e.getX(), e.getY())) {
@@ -358,8 +354,7 @@ public class CaptureDisplayController {
 
             initialX = event.getSceneX();
             initialY = event.getSceneY();
-        }
-        else if (type == 1) {
+        } else if (type == 1) {
             // 绘制普通线条
             GraphicsContext editGc = editArea.getGraphicsContext2D();
             editGc.setStroke(forecolor);
@@ -367,8 +362,7 @@ public class CaptureDisplayController {
             editGc.strokeLine(startX, startY, event.getX(), event.getY());
             startX = editArea.sceneToLocal(event.getSceneX(), event.getSceneY()).getX();
             startY = editArea.sceneToLocal(event.getSceneX(), event.getSceneY()).getY();
-        }
-        else {
+        } else {
             editContext.setStroke(forecolor);
             editContext.setLineWidth(strokeSlider.getValue());
             editContext.clearRect(0, 0, animator.getWidth(), animator.getHeight());
@@ -437,12 +431,12 @@ public class CaptureDisplayController {
 //                        if (isResizing) {
 //                        adjustScale();
 //                        } else {
-                            double offsetX = event.getX() - dragStartX;
-                            double offsetY = event.getY() - dragStartY;
-                            selectedText.setX(selectedText.getX() + offsetX);
-                            selectedText.setY(selectedText.getY() + offsetY);
-                            dragStartX = event.getX();
-                            dragStartY = event.getY();
+                        double offsetX = event.getX() - dragStartX;
+                        double offsetY = event.getY() - dragStartY;
+                        selectedText.setX(selectedText.getX() + offsetX);
+                        selectedText.setY(selectedText.getY() + offsetY);
+                        dragStartX = event.getX();
+                        dragStartY = event.getY();
 //                        }
                     }
                     editContext.clearRect(0, 0, animator.getWidth(), animator.getHeight());
@@ -518,7 +512,7 @@ public class CaptureDisplayController {
                     //绘制虚线半透明矩形
                     DrawType.RECTANGLE_DASHED_FILLED.draw(editContext, startX, startY, currentX, currentY, forecolor);
                 }
-                case 27 -> {
+                case 27, 29 -> {
                     //OCR
                     DrawType.RECTANGLE.draw(editContext, startX, startY, currentX, currentY);
                 }
@@ -533,12 +527,12 @@ public class CaptureDisplayController {
         if (event.getButton() != MouseButton.PRIMARY) {
             return;
         }
-        if(Math.abs(event.getX()-startX)<=25&&Math.abs(event.getY()-startY)<=25){
-            if(selectedImage!=null){
+        if (Math.abs(event.getX() - startX) <= 25 && Math.abs(event.getY() - startY) <= 25) {
+            if (selectedImage != null) {
                 selectedImage.setShouldRender(true);
                 imageHandler.drawAllImages(editContext);
             }
-            if(selectedText!=null){
+            if (selectedText != null) {
                 selectedText.setShouldRender(true);
                 textHandler.drawAllTexts(editContext);
             }
@@ -606,7 +600,7 @@ public class CaptureDisplayController {
                     allRecordStack.push(record);
                     editType = "图片-" + type + "(" + allRecordStack.size() + ")";
                     editHistory.add(editType);
-                    repaintCanvas(editContext,true,true,true);
+                    repaintCanvas(editContext, true, true, true);
                 }
             }
             case 9 -> {
@@ -726,43 +720,19 @@ public class CaptureDisplayController {
                 allRecordStack.push(new DrawRecords("rectDashedFilled", startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 27 -> {
-                double imageStartX = (startX - canvas.getTranslateX()) / canvas.getScaleX();
-                double imageStartY = (startY - canvas.getTranslateY()) / canvas.getScaleY();
-                double imageEndX = (currentX - canvas.getTranslateX()) / canvas.getScaleX();
-                double imageEndY = (currentY - canvas.getTranslateY()) / canvas.getScaleY();
-                // 计算矩形区域的宽度和高度
-                int width = (int) Math.abs(imageEndX - imageStartX);
-                int height = (int) Math.abs(imageEndY - imageStartY);
-                // 确保起始点为左上角的坐标
-                int x = (int) Math.min(imageStartX, imageEndX);
-                int y = (int) Math.min(imageStartY, imageEndY);
-                BufferedImage bf = SwingFXUtils.fromFXImage(canvas.snapshot(null, null), null);
-                BufferedImage subImage = bf.getSubimage(x, y, width, height);
-                if (tess == null) {
-                    tess = new Tesseract();
-                    tess.setLanguage("chi_sim+eng");
-                    tess.setDatapath("D:/Tesseract-OCR/tessdata"); // 设置 tesseract 数据路径（训练数据）
+                doOCR(ImageFormatHandler.cropImage(canvas, startX, startY, currentX, currentY));
+            }
+            case 29 -> {
+                //crop image
+                //裁剪后分辨率减低，会有点模糊
+                BufferedImage croppedImage = ImageFormatHandler.cropImage(canvas, startX, startY, currentX, currentY);
+                try {
+                    ImageIO.write(croppedImage,"png",new File("E:/test.png"));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-                CompletableFuture.supplyAsync(() -> {
-                    try {
-                        // 模拟繁琐任务
-                        return tess.doOCR(subImage);
-                    } catch (TesseractException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).thenAccept(res -> {
-                    Platform.runLater(() -> {
-                        if (textStage != null) {
-                            textStage.setText(res);
-                            if (!textStage.isShowing()) {
-                                textStage.show();
-                            }
-                        } else {
-                            textStage = new TextRecognitionStage(res, parent);
-                            textStage.show();
-                        }
-                    });
-                });
+                this.originalImage = ImageFormatHandler.toFXImage(croppedImage);
+                setCapture(this.originalImage,false);
             }
             default -> editType = "未知操作(" + allRecordStack.size() + ")";
         }
@@ -774,11 +744,45 @@ public class CaptureDisplayController {
 
     }
 
+    public void doOCR(BufferedImage image) {
+        CompletableFuture.supplyAsync(() -> {
+            Tesseract localTess = new Tesseract();
+            localTess.setLanguage("chi_sim+eng");
+            localTess.setDatapath(CaptureProperties.ocrPath);
+            try {
+                return localTess.doOCR(image);
+            } catch (TesseractException e) {
+                return "OCR Error: " + e.getMessage();
+            }
+        }, executor).thenAccept(res -> {
+            Platform.runLater(() -> {
+                System.out.println("result = " + res);
+                if (textStage != null) {
+                    textStage.setText(res);
+                    if (!textStage.isShowing()) {
+                        textStage.show();
+                    }
+                } else {
+                    textStage = new TextRecognitionStage(res, parent);
+                    textStage.show();
+                }
+            });
+        }).exceptionally(e -> {
+            try (PrintWriter writer = new PrintWriter(new File(CaptureProperties.logPath))) {
+                e.printStackTrace(writer);
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+            e.printStackTrace(); // 打印异常信息
+            return null;
+        });
+    }
+
     private void initToolManager() {
         tools.getItems().clear();
-        toolbarManager.addAll(upload, createEmpty, save, copy, undo, redo, reset, clear, drag, pencil, rubber);
+        toolbarManager.addAll(upload, createEmpty, save, copy, undo, redo, reset, clear, ocr, tailor, drag, pencil, rubber);
         toolbarManager.addAll(line, rect, arrow, oval);
-        toolbarManager.addAll(colorPicker, strokeSlider, addImage, addText, ocr, processType, process, setting, exit);
+        toolbarManager.addAll(colorPicker, strokeSlider, addImage, addText, processType, process, setting, exit);
         toolbarManager.addToToolBar();
     }
 
@@ -791,13 +795,16 @@ public class CaptureDisplayController {
                 ResourceLoader.getAsLines("picker/oval.txt"), this);
         line = new LinePicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/line.png").toExternalForm()),
                 ResourceLoader.getAsLines("picker/line.txt"), this);
+        ocr = new OCRPicker(new Image(ScreenCaptureToolApp.class.
+                getResource("assets/icon/ocr.png").toExternalForm()),
+                ResourceLoader.getAsLines("picker/ocr.txt"), this);
         initToolManager();
     }
 
     public void addExternalText(DrawableText text) {
         //TODO
         long tick = new Timestamp(System.currentTimeMillis()).getTime();
-        DrawRecords record = new DrawRecords("externalText", text,"init", tick);
+        DrawRecords record = new DrawRecords("externalText", text, "init", tick);
         allRecordStack.push(record);
         String editType = "文字-添加 " + "(" + allRecordStack.size() + ")";
         editHistory.add(editType);
@@ -857,22 +864,22 @@ public class CaptureDisplayController {
     }
 
 
-    private void repaintCanvas(GraphicsContext gc, boolean renderSelectedImg,boolean renderSelectedText, boolean shouldClear) {
+    private void repaintCanvas(GraphicsContext gc, boolean renderSelectedImg, boolean renderSelectedText, boolean shouldClear) {
         if (shouldClear) {
             gc.clearRect(0, 0, editArea.getWidth(), editArea.getHeight());
         }
         initRepaintStack(allRecordStack);
         for (int i = 0; i < repaintStack.size(); i++) {
             DrawRecords record = repaintStack.get(i);
-            if ("externalImg".equals(record.getDrawType()) &&selectedImage!=null &&selectedImage.getImage().equals(record.getImage())) {
+            if ("externalImg".equals(record.getDrawType()) && selectedImage != null && selectedImage.getImage().equals(record.getImage())) {
                 if (renderSelectedImg) {
                     record.draw(gc, animator.getGraphicsContext2D());
                 }
-            }else if("externalText".equals(record.getDrawType()) && selectedText!=null&& selectedText.getValue().equals(record.getText())){
+            } else if ("externalText".equals(record.getDrawType()) && selectedText != null && selectedText.getValue().equals(record.getText())) {
                 if (renderSelectedText) {
                     record.draw(gc, animator.getGraphicsContext2D());
                 }
-            }else {
+            } else {
                 record.draw(gc, animator.getGraphicsContext2D());
             }
         }
@@ -909,10 +916,10 @@ public class CaptureDisplayController {
     }
 
     private void onKeyReleased(KeyEvent e) {
-        isAltPressed=false;
-        isShiftPressed=false;
-        isCtrlPressed=false;
-        if(textPane!=null&&!textPane.shouldAddTextField()){
+        isAltPressed = false;
+        isShiftPressed = false;
+        isCtrlPressed = false;
+        if (textPane != null && !textPane.shouldAddTextField()) {
             return;
         }
         type = oriType;
@@ -933,19 +940,19 @@ public class CaptureDisplayController {
 
     private void onKeyPressed(KeyEvent e) {
         oriType = type;
-        isAltPressed=false;
-        isShiftPressed=false;
-        isCtrlPressed=false;
+        isAltPressed = false;
+        isShiftPressed = false;
+        isCtrlPressed = false;
         if (e.getCode() == KeyCode.ESCAPE) {
             copy();
             parent.close();
         }
-        if (textPane==null||e.getCode() == KeyCode.SHIFT&&textPane.shouldAddTextField()) {
+        if (textPane == null || e.getCode() == KeyCode.SHIFT && textPane.shouldAddTextField()) {
             rubberMode();
             isShiftPressed = true;
         }
         if (e.getCode() == KeyCode.ALT) {//&&!moving
-            if(textPane!=null&&textPane.shouldAddTextField()){
+            if (textPane != null && textPane.shouldAddTextField()) {
                 dragMode();
             }
             isAltPressed = true;
@@ -973,7 +980,7 @@ public class CaptureDisplayController {
             allRecordStack.push(new DrawRecords("externalImg", selectedImage, "delete", tick));
             editHistory.add("删除图片(" + allRecordStack.size() + ")");
 //                        editRecordImageRender(false,selectedImage);
-            repaintCanvas(editArea.getGraphicsContext2D(), false, false,true);
+            repaintCanvas(editArea.getGraphicsContext2D(), false, false, true);
             imageHandler.drawAllImages(editArea.getGraphicsContext2D());
             selectedImage = null;
         }
@@ -1027,7 +1034,7 @@ public class CaptureDisplayController {
                     }
                     repaintStack.push(lastRecord);
                 }
-            }else if ("externalText".equals(record.getDrawType())) {
+            } else if ("externalText".equals(record.getDrawType())) {
                 DrawRecords lastRecord = null;
                 for (DrawRecords record1 : recordStack) {
                     //TODO
@@ -1063,10 +1070,10 @@ public class CaptureDisplayController {
     private void drawImageToCanvas(Image image) {
         // 获取 canvas 的 GraphicsContext
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        gc.clearRect(0, 0, capture.getFitWidth(), capture.getFitHeight());
         gc.setImageSmoothing(false);
         // 在 canvas 上绘制图像
-        gc.drawImage(image, 0, 0, canvas.getWidth(), canvas.getHeight());
+        gc.drawImage(image, 0, 0, capture.getFitWidth(), capture.getFitHeight());
     }
 
     @FXML
@@ -1093,7 +1100,7 @@ public class CaptureDisplayController {
         editArea.setScaleY(1);
         SnapshotParameters parameters = new SnapshotParameters();
         parameters.setTransform(Transform.scale(CaptureProperties.scale, CaptureProperties.scale));  // 扩大图像
-        repaintCanvas(canvas.getGraphicsContext2D(), true,true, false);
+        repaintCanvas(canvas.getGraphicsContext2D(), true, true, false);
         WritableImage writableImage = canvas.snapshot(parameters, null);
         // 转换为 BufferedImage
         BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
@@ -1111,6 +1118,7 @@ public class CaptureDisplayController {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            CaptureProperties.updateSelectPath(file.getParent());
         }
         drawImageToCanvas(originalImage);
         state.setText("图片已保存");
@@ -1124,7 +1132,7 @@ public class CaptureDisplayController {
         editArea.setScaleY(1);
         SnapshotParameters parameters = new SnapshotParameters();
         parameters.setTransform(Transform.scale(CaptureProperties.scale, CaptureProperties.scale));  // 扩大图像
-        repaintCanvas(canvas.getGraphicsContext2D(), true, true,false);
+        repaintCanvas(canvas.getGraphicsContext2D(), true, true, false);
         WritableImage writableImage = canvas.snapshot(parameters, null);
         TransferableImage transferableImage = new TransferableImage(writableImage);
         // 复制到剪贴板
@@ -1140,18 +1148,19 @@ public class CaptureDisplayController {
         clearCanvas(animator);
     }
 
+
     @FXML
     public void undo() {
         //TODO
         if (!allRecordStack.isEmpty()) {  // 至少保留一个初始图像
             DrawRecords popRecord = allRecordStack.pop();
-            if ("externalImg".equals(popRecord.getDrawType())){
-                if("init".equals(popRecord.getDetailInfo())){
+            if ("externalImg".equals(popRecord.getDrawType())) {
+                if ("init".equals(popRecord.getDetailInfo())) {
                     //如果是最后一个相关记录，则设置为伪移除
                     popRecord.getDrawableImage().setUndo(true);
                 }
-            }else if("externalText".equals(popRecord.getDrawType())){
-                if("init".equals(popRecord.getDetailInfo())){
+            } else if ("externalText".equals(popRecord.getDrawType())) {
+                if ("init".equals(popRecord.getDetailInfo())) {
                     //如果是最后一个相关记录，则设置为伪移除
                     popRecord.getDrawableText().setUndo(true);
                 }
@@ -1163,16 +1172,16 @@ public class CaptureDisplayController {
                 if ("externalImg".equals(lastRecord.getDrawType())) {
                     selectedImage = lastRecord.getDrawableImage();
                     adjustSelectedImagePos(lastRecord);
-                } else if("externalText".equals(lastRecord.getDrawType())){
+                } else if ("externalText".equals(lastRecord.getDrawType())) {
                     selectedText = lastRecord.getDrawableText();
                     adjustSelectedTextPos(lastRecord);
-                }else {
+                } else {
                     selectedImage = null;
                     selectedText = null;
                 }
             }
             clearCanvas(animator);
-            repaintCanvas(editArea.getGraphicsContext2D(), true, true,true);
+            repaintCanvas(editArea.getGraphicsContext2D(), true, true, true);
         }
     }
 
@@ -1196,11 +1205,11 @@ public class CaptureDisplayController {
         if (!undoStack.isEmpty()) {
             DrawRecords popRecord = undoStack.pop();
             if ("externalImg".equals(popRecord.getDrawType())) {
-                if("init".equals(popRecord.getDetailInfo())){
+                if ("init".equals(popRecord.getDetailInfo())) {
                     popRecord.getDrawableImage().setUndo(false);
                 }
-            } else if("externalText".equals(popRecord.getDrawType())){
-                if("init".equals(popRecord.getDetailInfo())){
+            } else if ("externalText".equals(popRecord.getDrawType())) {
+                if ("init".equals(popRecord.getDetailInfo())) {
                     popRecord.getDrawableText().setUndo(false);
                 }
             }
@@ -1208,21 +1217,21 @@ public class CaptureDisplayController {
                 DrawRecords lastRecord = undoStack.getLast();
                 if ("externalImg".equals(lastRecord.getDrawType())) {
                     selectedImage = lastRecord.getDrawableImage();
-                    if("init".equals(popRecord.getDetailInfo())){
+                    if ("init".equals(popRecord.getDetailInfo())) {
                         selectedImage.setUndo(false);
                     }
                     adjustSelectedImagePos(lastRecord);
-                } else if("externalText".equals(lastRecord.getDrawType())){
+                } else if ("externalText".equals(lastRecord.getDrawType())) {
                     selectedText = lastRecord.getDrawableText();
                     adjustSelectedTextPos(lastRecord);
-                }else {
+                } else {
                     selectedImage = null;
                     selectedText = null;
                 }
             }
             allRecordStack.push(popRecord);
             clearCanvas(animator);
-            repaintCanvas(editArea.getGraphicsContext2D(), true, true,true);
+            repaintCanvas(editArea.getGraphicsContext2D(), true, true, true);
 
         }
     }
@@ -1254,6 +1263,8 @@ public class CaptureDisplayController {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setImageSmoothing(false);
         // 在 canvas 上绘制图像
+        clearCanvas(canvas);
+        clearCanvas(editArea);
         gc.drawImage(image, 0, 0, canvas.getWidth(), canvas.getHeight());
         canvas.requestFocus();
         clearCanvas(animator);
@@ -1261,7 +1272,7 @@ public class CaptureDisplayController {
 
     private void resizeStage() {
         if (parent != null) {
-            parent.setWidth(capture.getFitWidth());
+            parent.setWidth(capture.getFitWidth() + 30);
             parent.setHeight(capture.getFitHeight() + 100);
             canvas.setWidth(capture.getFitWidth());
             canvas.setHeight(capture.getFitHeight());
@@ -1272,11 +1283,23 @@ public class CaptureDisplayController {
         }
     }
 
-    public void setCapture(ImageView capture) {
-        this.capture = capture;
-        originalImage = new WritableImage(capture.getImage().getPixelReader(),
-                (int) capture.getImage().getWidth(), (int) capture.getImage().getHeight());
+    public void setCapture(Image image, boolean shouldScale) {
+        this.capture = new ImageView(image);
+        // 创建 ImageView 来显示图片
+        capture.setPreserveRatio(true);  // 保持宽高比
+        double imageWidth = image.getWidth();
+        double imageHeight = image.getHeight();
+        if (shouldScale) {
+            //TODO
+            //应该调整使得显示的窗口大小合适，且图像缩放也合适javafx
+            capture.setFitWidth(imageWidth / ScreenCaptureUtil.SCALE);
+            capture.setFitHeight(imageHeight / ScreenCaptureUtil.SCALE);
+        }else{
+            capture.setFitWidth(imageWidth);
+            capture.setFitHeight(imageHeight);
+        }
         if (capture.getImage() != null) {
+            resizeStage();
             drawImageToCanvas(capture.getImage());
         }
     }
@@ -1419,7 +1442,8 @@ public class CaptureDisplayController {
     }
 
     public void completelyExit() {
-        if (AlertHelper.showConfirmAlert()) {
+        if (AlertHelper.showConfirmAlert("Exit confirm", "Are you sure you want to exit now?",
+                "Click OK to exit, or Cancel to continue.")) {
             Platform.exit();
             System.exit(0);
         }
@@ -1434,18 +1458,18 @@ public class CaptureDisplayController {
 //        editArea.setHeight(capture.getFitHeight());
 //        animator.setWidth(capture.getFitWidth());
 //        animator.setHeight(capture.getFitHeight());
-       for(DrawableText text:textHandler.getTexts()){
-           System.out.println(text.toString());
-       }
+        for (DrawableText text : textHandler.getTexts()) {
+            System.out.println(text.toString());
+        }
     }
 
     public void test1() throws IOException {
         System.out.println("===========  全部编辑记录 ===========");
-        for(DrawRecords r: allRecordStack){
+        for (DrawRecords r : allRecordStack) {
             System.out.println(r.toString());
         }
         System.out.println("-------  undo 记录 ---------");
-        for(DrawRecords r:undoStack){
+        for (DrawRecords r : undoStack) {
             System.out.println(r.toString());
         }
         System.out.println("==========================");
@@ -1464,6 +1488,7 @@ public class CaptureDisplayController {
             case 1 -> pencilMode();
             case 8 -> addImage();
             case 9 -> addText();
+            case 29 -> tailorMode();
             default -> setCursorShape(Cursor.CROSSHAIR);
         }
     }
@@ -1497,6 +1522,7 @@ public class CaptureDisplayController {
         type = 9;
         editArea.setCursor(Cursor.HAND);
         setGraphicsContextFont();
+
     }
 
     @FXML
@@ -1506,6 +1532,14 @@ public class CaptureDisplayController {
         Image cursorImage = new Image(ScreenCaptureToolApp.class.getResource("assets/icon/pencil.png").toExternalForm()); // 替换为你自己的图像路径
         ImageCursor customCursor = new ImageCursor(cursorImage, 0, 32); // (16,16) 是热点位置（图像的中心）
         setCursorShape(customCursor);
+        editArea.getGraphicsContext2D().setLineDashes(0);
+    }
+
+    @FXML
+    private void tailorMode() {
+        type = 29;
+        setCursorShape(Cursor.CROSSHAIR);
+        editArea.getGraphicsContext2D().setLineDashes(0);
     }
 
     @FXML
@@ -1532,40 +1566,74 @@ public class CaptureDisplayController {
             state.setText(text);
         });
     }
-    public boolean isMoving(){
+
+    public boolean isMoving() {
         return this.moving;
     }
-    public void setMoving(boolean moving){
-        this.moving=moving;
+
+    public void setMoving(boolean moving) {
+        this.moving = moving;
     }
-    public double getToolBarHeight(){
+
+    public double getToolBarHeight() {
         return this.tools.getHeight();
     }
-    public boolean isAltPressed(){
+
+    public boolean isAltPressed() {
         return this.isAltPressed;
     }
-    public ExternalTextHandler getTextHandler(){
+
+    public ExternalTextHandler getTextHandler() {
         return this.textHandler;
     }
-    public Color getStrokeColor(){
+
+    public Color getStrokeColor() {
         return this.forecolor;
     }
-    public GraphicsContext getGraphicsContext(){
+
+    public GraphicsContext getGraphicsContext() {
         return editArea.getGraphicsContext2D();
     }
-    public void setFont(Font font){
-        this.font=font;
+
+    public void setFont(Font font) {
+        this.font = font;
         setGraphicsContextFont(font);
     }
-    public Font getFont(){
-        return this.font==null ? new Font("Arial",16) : font;
+
+    public Font getFont() {
+        return this.font == null ? new Font("Arial", 16) : font;
     }
+
     private void setGraphicsContextFont() {
         editArea.getGraphicsContext2D().setFont(font);
+        editArea.getGraphicsContext2D().setLineDashes(0);
         animator.getGraphicsContext2D().setFont(font);
+        animator.getGraphicsContext2D().setLineDashes(0);
     }
+
     public void setGraphicsContextFont(Font font) {
         editArea.getGraphicsContext2D().setFont(font);
         animator.getGraphicsContext2D().setFont(font);
+    }
+
+    public Stage getParent() {
+        return parent;
+    }
+
+    public BufferedImage getOriginalImage() {
+        return SwingFXUtils.fromFXImage(originalImage, null);
+    }
+
+    public void initialExecutor() {
+        this.executor = Executors.newFixedThreadPool(4);
+    }
+
+    public void setOriginalImage(WritableImage originalImage) {
+        this.originalImage = originalImage;
+    }
+
+    public void setOriginalImage(Image originalImage) {
+        this.originalImage = new WritableImage(originalImage.getPixelReader(),
+                (int) originalImage.getWidth(), (int) originalImage.getHeight());
     }
 }

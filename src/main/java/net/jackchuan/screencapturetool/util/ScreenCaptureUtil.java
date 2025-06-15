@@ -20,6 +20,7 @@ public class ScreenCaptureUtil {
     private static final int SRCCOPY = 0x00CC0020;
     public static int PHYSICAL_SIZE=0;
     public static int DEFAULT_SIZE=1;
+    public static double SCALE = getScreenScale();
 
     public static BufferedImage captureWithPython(int x, int y, int width, int height) throws FileNotFoundException {
         BufferedImage image=null;

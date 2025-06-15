@@ -3,12 +3,12 @@ module net.jackchuan.screencapturetool {
     requires javafx.swing;
     requires javafx.fxml;
     requires javafx.controls;
-    requires tess4j;
     requires org.bytedeco.opencv;
     requires java.sql;
     requires org.slf4j;
     requires com.github.kwhat.jnativehook;
     requires java.compiler;
+    requires net.sourceforge.tess4j;
 
 
     opens net.jackchuan.screencapturetool to javafx.fxml;

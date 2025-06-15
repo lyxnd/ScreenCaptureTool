@@ -13,7 +13,7 @@ import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 import java.util.ArrayList;
 
 /**
- * 功能：
+ * 功能：继承该类后可以在点击时弹出选择框，在子类中设置选项点击事件，参数为选项序号，(无需为子类设置onAction等)
  * 作者：jackchuan
  * 日期：2024/12/17 19:57
  */
@@ -118,7 +118,11 @@ public abstract class CustomPicker extends Button {
         for (int i = 0; i < imgPaths.size(); i++) {
             choices[i] = new Button();
             // 创建图像视图
-            ImageView imageView = new ImageView(ScreenCaptureToolApp.class.getResource(imgPaths.get(i)).toExternalForm());
+            String path = ScreenCaptureToolApp.class.getResource(imgPaths.get(i)).toExternalForm();
+            if(path==null||path.isBlank()){
+                continue;
+            }
+            ImageView imageView = new ImageView(path);
             imageView.setFitWidth(20);  // 设置图标的宽度
             imageView.setFitHeight(20); // 设置图标的高度
             choices[i].setGraphic(imageView);

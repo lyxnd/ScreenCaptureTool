@@ -7,28 +7,17 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
-import javafx.scene.input.MouseButton;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.util.Pair;
-import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 import net.jackchuan.screencapturetool.controller.SettingController;
 import net.jackchuan.screencapturetool.external.stage.OverlayStage;
-import net.jackchuan.screencapturetool.util.*;
+import net.jackchuan.screencapturetool.util.LibraryLoader;
+import net.jackchuan.screencapturetool.util.ScreenCaptureUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -64,6 +53,9 @@ public class ScreenCaptureToolApp extends Application {
         }
         if (!CaptureProperties.loadProperties()) {
             CaptureProperties.updateAll(CaptureProperties.enableAll);
+        }
+        if(CaptureProperties.showSettings){
+            openConfigWindow();
         }
     }
 
@@ -166,7 +158,8 @@ public class ScreenCaptureToolApp extends Application {
             } catch (AWTException e) {
                 throw new RuntimeException(e);
             }
-            overlayStage = new OverlayStage(SwingFXUtils.toFXImage(image,null));
+//            overlayStage = new OverlayStage(SwingFXUtils.toFXImage(image,null));
+            overlayStage = new OverlayStage();
         }
         overlayStage.show();
     }

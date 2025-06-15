@@ -1,4 +1,4 @@
-package net.jackchuan.screencapturetool.util;
+package net.jackchuan.screencapturetool.external.stage;
 
 import javafx.animation.PauseTransition;
 import javafx.scene.Scene;
@@ -20,16 +20,23 @@ import java.util.Optional;
  */
 public class AlertHelper {
 
-    public static boolean showConfirmAlert(){
+    public static boolean showConfirmAlert(String title,String header,String message){
         Alert alert=new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Exit confirm");
-        alert.setHeaderText("Are you sure you want to exit now?");
-        alert.setContentText("Click OK to exit, or Cancel to continue.");
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(message);
         Optional<ButtonType> type = alert.showAndWait();
         if(type.isEmpty()){
             return false;
         }
         return type.get() == ButtonType.OK;
+    }
+    public static void showErrorDialog(String title,String header,String message){
+        Alert alert=new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+        alert.show();
     }
 
     public static void showAutoClosedPopup(String message, int seconds,double x,double y) {

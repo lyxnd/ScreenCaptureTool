@@ -80,7 +80,23 @@
         <dependency>
             <groupId>net.sourceforge.tess4j</groupId>
             <artifactId>tess4j</artifactId>
-            <version>5.11.0</version>
+            <version>5.13.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.java.dev.jna</groupId>
+                    <artifactId>jna</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-jpms</artifactId>
+            <version>5.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform-jpms</artifactId>
+            <version>5.14.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -97,7 +113,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>1.4.14</version>
+            <version>1.5.13</version>
         </dependency>
 
     </dependencies>
@@ -148,6 +164,48 @@
                     </execution>
                 </executions>
             </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.moditect</groupId>-->
+<!--                <artifactId>moditect-maven-plugin</artifactId>-->
+<!--                <version>1.2.2.Final</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>add-module-infos</id>-->
+<!--                        <phase>generate-resources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>add-module-info</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>${project.build.directory}/modules</outputDirectory>-->
+<!--                            <modules>-->
+<!--                                <module>-->
+<!--                                    <artifact>-->
+<!--                                        <groupId>net.sourceforge.tess4j</groupId>-->
+<!--                                        <artifactId>tess4j</artifactId>-->
+<!--                                        <version>5.13.0</version>-->
+<!--                                    </artifact>-->
+<!--                                    <moduleInfoSource>-->
+<!--                                        module net.sourceforge.tess4j {-->
+<!--                                        requires com.sun.jna;-->
+<!--                                        requires jai.imageio.core;-->
+<!--                                        requires java.desktop;-->
+<!--                                        requires java.xml;-->
+<!--                                        requires net.sourceforge.lept4j;-->
+<!--                                        requires org.apache.commons.io;-->
+<!--                                        requires org.slf4j;-->
+
+<!--                                        exports net.sourceforge.tess4j;-->
+<!--                                        exports net.sourceforge.tess4j.util;-->
+<!--                                        exports com.recognition.software.jdeskew;-->
+<!--                                        }-->
+
+<!--                                    </moduleInfoSource>-->
+<!--                                </module>-->
+<!--                            </modules>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
         </plugins>
     </build>
 </project>

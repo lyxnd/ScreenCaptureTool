@@ -4,7 +4,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Font;
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
-import net.jackchuan.screencapturetool.util.ControllerInstance;
+import net.jackchuan.screencapturetool.entity.ControllerInstance;
 
 /**
  * 功能：

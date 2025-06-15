@@ -2,14 +2,12 @@ package net.jackchuan.screencapturetool.controller;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import net.jackchuan.screencapturetool.util.ControllerInstance;
+import net.jackchuan.screencapturetool.entity.ControllerInstance;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -30,6 +30,26 @@ public class LibraryLoader {
             throw new UnsatisfiedLinkError("Failed to load OpenCV library.");
         }
     }
+    public static void loadTess4jLibrary() {
+        try {
+            System.setProperty("jna.library.path",
+                    "32".equals(System.getProperty("sun.arch.data.model")) ? "lib/win32-x86" : "lib/win32-x86-64");
+            File tempLib1 = File.createTempFile("libtesseract541", ".dll");
+            tempLib1.deleteOnExit(); // 程序退出时删除临时文件
+            // 从资源路径读取 DLL 文件并写入临时文件
+            Files.copy(ScreenCaptureToolApp.class.getResourceAsStream("lib/libtesseract541.dll"),
+                    tempLib1.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            // 使用临时文件的路径加载 DLL
+
+            System.out.println(tempLib1.exists());
+            System.load(tempLib1.getAbsolutePath());
+            System.out.println("Tess4j library loaded successfully.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new UnsatisfiedLinkError("Failed to load Tess4j library.");
+        }
+    }
 
     public static void loadJNativeHook() {
         try {

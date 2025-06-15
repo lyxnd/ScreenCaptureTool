@@ -4,19 +4,49 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.lang.String?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="net.jackchuan.screencapturetool.controller.SettingController"
             stylesheets="@./assets/css/setting.css"
             prefHeight="400.0" prefWidth="640.0">
-
     <top>
-        <HBox>
-            <Label text="如果要永久保存设置，需要添加配置文件->"/>
-            <TextField prefWidth="200" editable="false" fx:id="savePath"/>
-            <Button text="另保存为配置文件" onAction="#saveAsFile"/>
-            <Button text="默认原路径保存" onAction="#saveOnOriginalPath"/>
-        </HBox>
+       <VBox>
+           <HBox>
+               <Button text="打开配置文件" onAction="#openConfigFile"/>
+               <Button styleClass="icon-button" onAction="#reloadConfig">
+                   <graphic>
+                       <ImageView fitHeight="20" fitWidth="20">
+                           <Image url="@../screencapturetool/assets/icon/reload.png"/>
+                       </ImageView>
+                   </graphic>
+                   <tooltip>
+                       <Tooltip text="reload configs from file"/>
+                   </tooltip>
+               </Button>
+               <CheckBox text="启动时自动弹出" fx:id="popSetting" style="-fx-padding: 5 20"/>
+               <Label text="打开设置界面 : Shift + F8" style="-fx-font-weight: bold;-fx-font-size: 14;-fx-padding: 5"/>
+           </HBox>
+           <HBox>
+               <Label text="如果要永久保存设置，需要添加配置文件->"/>
+               <TextField prefWidth="200" editable="false" fx:id="savePath"/>
+               <Button text="另保存为配置文件" onAction="#saveAsFile"/>
+               <Button text="默认原路径保存" onAction="#saveOnOriginalPath"/>
+           </HBox>
+           <HBox>
+               <Label text="可执行文件(EXE)安装目录："/>
+               <TextField prefWidth="200" editable="false" fx:id="exePath"/>
+               <Button text="更改目录" onAction="#locateExePath"/>
+           </HBox>
+           <HBox>
+               <Label text="OCR数据目录:"/>
+               <TextField prefWidth="200" editable="false" fx:id="ocrDataPath"/>
+               <Button text="更改目录" onAction="#locateOCRPath"/>
+               <Button text="选择Zip文件/选择数据路径下任意文件" onAction="#unzipFromLocal" />
+           </HBox>
+       </VBox>
+
     </top>
     <center>
         <ScrollPane>
