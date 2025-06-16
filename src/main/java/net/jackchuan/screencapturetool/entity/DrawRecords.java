@@ -15,7 +15,6 @@ import net.jackchuan.screencapturetool.util.impl.DrawType;
  * 日期：2024/12/12 13:26
  */
 public class DrawRecords {
-    private String drawType;
     private double startX;
     private double startY;
     private double endX;
@@ -32,12 +31,13 @@ public class DrawRecords {
     private long editTick;
     private boolean shouldRepaint;
     private String text;
+    private DrawTypes type;
 
     public DrawRecords() {
     }
 
-    public DrawRecords(String drawType, DrawableText text, String detail, long tick) {
-        this.drawType = drawType;
+    public DrawRecords(DrawTypes drawType, DrawableText text, String detail, long tick) {
+        this.type = drawType;
         this.drawableText = text;
         setStartX(text.getX());
         setStartY(text.getY());
@@ -66,8 +66,8 @@ public class DrawRecords {
         }
     }
 
-    public DrawRecords(String drawType, double startX, double startY, double endX, double endY, WritableImage img, Color color, long tick) {
-        this.drawType = drawType;
+    public DrawRecords(DrawTypes drawType, double startX, double startY, double endX, double endY, WritableImage img, Color color, long tick) {
+        this.type = drawType;
         this.startX = startX;
         this.startY = startY;
         this.endX = endX;
@@ -77,8 +77,8 @@ public class DrawRecords {
         this.editTick = tick;
     }
 
-    public DrawRecords(String drawType, DrawableImage externalImage, String detail, long tick) {
-        this.drawType = drawType;
+    public DrawRecords(DrawTypes drawType, DrawableImage externalImage, String detail, long tick) {
+        this.type = drawType;
         this.drawableImage = externalImage;
         setStartX(externalImage.getX());
         setStartY(externalImage.getY());
@@ -92,83 +92,83 @@ public class DrawRecords {
     public void draw(GraphicsContext gc, GraphicsContext animatorGc) {
         gc.setStroke(color);
         gc.setFill(color);
-        switch (drawType) {
-            case "common"->{
+        switch (type) {
+            case DrawTypes.COMMON->{
 
             }
-            case "rect" -> {
+            case DrawTypes.RECT -> {
                 DrawType.RECTANGLE.draw(gc, startX, startY, endX, endY);
             }
-            case "fillRect" -> {
+            case DrawTypes.FILL_RECT -> {
                 DrawType.FILLED_RECTANGLE.draw(gc, startX, startY, endX, endY, color);
             }
-            case "arrow" -> {
+            case DrawTypes.ARROW -> {
                 DrawType.ARROW.draw(gc, startX, startY, endX, endY);
             }
-            case "line" -> {
+            case DrawTypes.LINE -> {
                 DrawType.LINE.draw(gc, startX, startY, endX, endY);
             }
-            case "wave" -> {
+            case DrawTypes.WAVE -> {
                 DrawType.WAVE.draw(gc, startX, startY, endX, endY);
             }
-            case "circle" -> {
+            case DrawTypes.CIRCLE -> {
                 DrawType.CIRCLE.draw(gc, startX, startY, endX, endY);
             }
-            case "filledOval" -> {
+            case DrawTypes.FILLED_OVAL -> {
                 DrawType.FILLED_CIRCLE.draw(gc, startX, startY, endX, endY, color);
             }
-            case "lineDashed"->{
+            case DrawTypes.LINE_DASHED->{
                 DrawType.LINE_DASHED.draw(gc, startX, startY, endX, endY);
             }
-            case "lineDouble"->{
+            case DrawTypes.LINE_DOUBLE->{
                 DrawType.LINE_DOUBLE.draw(gc, startX, startY, endX, endY);
             }
-            case "rectRound"->{
+            case DrawTypes.RECT_ROUND->{
                 DrawType.RECTANGLE_ROUND.draw(gc, startX, startY, endX, endY);
             }
-            case "rectRoundFilled"->{
+            case DrawTypes.RECT_ROUND_FILLED->{
                 DrawType.RECTANGLE_ROUND_FILLED.draw(gc, startX, startY, endX, endY,color);
             }
-            case "arrowDashed"->{
+            case DrawTypes.ARROW_DASHED->{
                 DrawType.ARROW_DASHED.draw(gc, startX, startY, endX, endY);
             }
-            case "arrowFilled"->{
+            case DrawTypes.ARROW_FILLED->{
                 DrawType.ARROW_FILLED.draw(gc, startX, startY, endX, endY,color);
             }
-            case "arrowEmpty"->{
+            case DrawTypes.ARROW_EMPTY->{
                 DrawType.ARROW_EMPTY.draw(gc, startX, startY, endX, endY);
             }
-            case "arrowTwoDir"->{
+            case DrawTypes.ARROW_TWO_DIR->{
                 DrawType.ARROW_TWO_DIR.draw(gc, startX, startY, endX, endY);
             }
-            case "arrowDouble"->{
+            case DrawTypes.ARROW_DOUBLE->{
                 DrawType.ARROW_DOUBLE.draw(gc, startX, startY, endX, endY);
             }
-            case "ovalDashed"->{
+            case DrawTypes.OVAL_DASHED->{
                 DrawType.OVAL_DASHED.draw(gc, startX, startY, endX, endY);
             }
-            case "arrowDoubleDashed"->{
+            case DrawTypes.ARROW_DOUBLE_DASHED->{
                 DrawType.ARROW_DOUBLE_DASHED.draw(gc, startX, startY, endX, endY);
             }
-            case "arrowDoubleTwo"->{
+            case DrawTypes.ARROW_DOUBLE_TWO_DIR->{
                 DrawType.ARROW_DOUBLE_TWO_DIR.draw(gc, startX, startY, endX, endY);
             }
-            case "rectRoundDashed"->{
+            case DrawTypes.RECT_ROUND_DASHED->{
                 DrawType.RECTANGLE_ROUND_DASHED.draw(gc, startX, startY, endX, endY);
             }
-            case "rectRoundDashedFilled"->{
+            case DrawTypes.RECT_ROUND_DASHED_FILLED->{
                 DrawType.RECTANGLE_ROUND_DASHED_FILLED.draw(gc, startX, startY, endX, endY,color);
             }
-            case "rectDashed"->{
+            case DrawTypes.RECT_DASHED->{
                 DrawType.RECTANGLE_DASHED.draw(gc, startX, startY, endX, endY);
             }
-            case "rectDashedFilled"->{
+            case DrawTypes.RECT_DASHED_FILLED->{
                 DrawType.RECTANGLE_DASHED_FILLED.draw(gc, startX, startY, endX, endY,color);
             }
-            case "externalImg" -> {
+            case DrawTypes.EXTERNAL_IMAGE -> {
                 updateExternalImage(gc, animatorGc);
             }
-            case "externalText" -> {
+            case DrawTypes.EXTERNAL_TEXT -> {
                 updateExternalText(gc, animatorGc);
             }
         }
@@ -306,8 +306,8 @@ public class DrawRecords {
         this.color = color;
     }
 
-    public void setDrawType(String drawType) {
-        this.drawType = drawType;
+    public void setDrawType(DrawTypes drawType) {
+        this.type = drawType;
     }
 
     public void setEndX(double endX) {
@@ -346,8 +346,8 @@ public class DrawRecords {
         return startY;
     }
 
-    public String getDrawType() {
-        return drawType;
+    public DrawTypes getDrawType() {
+        return type;
     }
 
     public Image getImage() {
@@ -379,7 +379,7 @@ public class DrawRecords {
         String pos = drawableImage==null? "empty" : drawableImage.getX()+"\t"+drawableImage.getY();
         String pos1 = drawableText==null? "empty" : drawableText.getX()+"\t"+drawableText.getY();
         return "DrawRecords{" +
-                "drawType='" + drawType + '\'' +
+                "drawType='" + type + '\'' +
                 ", startX=" + startX +
                 ", startY=" + startY +
                 ", width=" + width +

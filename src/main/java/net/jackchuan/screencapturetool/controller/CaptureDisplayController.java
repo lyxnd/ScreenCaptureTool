@@ -32,6 +32,7 @@ import net.jackchuan.screencapturetool.CaptureProperties;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import net.jackchuan.screencapturetool.entity.ControllerInstance;
 import net.jackchuan.screencapturetool.entity.DrawRecords;
+import net.jackchuan.screencapturetool.entity.DrawTypes;
 import net.jackchuan.screencapturetool.external.ExternalImageHandler;
 import net.jackchuan.screencapturetool.external.ExternalImageHandler.DrawableImage;
 import net.jackchuan.screencapturetool.external.ExternalTextHandler;
@@ -56,6 +57,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -553,39 +555,39 @@ public class CaptureDisplayController {
                 editType = "普通绘画(" + allRecordStack.size() + ")";
                 DrawRecords record = new DrawRecords();
                 record.setColor(forecolor);
-                record.setDrawType("common");
+                record.setDrawType(DrawTypes.COMMON);
                 record.setImage(getSnapshot(editArea));
                 allRecordStack.push(record);
             }
             case 2 -> {
                 editType = "绘制矩形框(" + allRecordStack.size() + ")";
                 DrawType.RECTANGLE.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("rect", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.RECT, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 3 -> {
                 editType = "绘制透明填充的矩形框(" + allRecordStack.size() + ")";
                 DrawType.FILLED_RECTANGLE.draw(editContext, startX, startY, currentX, currentY, forecolor);
-                allRecordStack.push(new DrawRecords("fillRect", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.FILL_RECT, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 4 -> {
                 editType = "绘制箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("arrow", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 5 -> {
                 editType = "绘制直线(" + allRecordStack.size() + ")";
                 DrawType.LINE.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("line", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.LINE, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 6 -> {
                 editType = "绘制波浪线(" + allRecordStack.size() + ")";
                 DrawType.WAVE.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("wave", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.WAVE, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 7 -> {
                 editType = "绘制圆(" + allRecordStack.size() + ")";
                 DrawType.CIRCLE.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("circle", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.CIRCLE, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 8 -> {
                 //保存图片内容
@@ -596,7 +598,7 @@ public class CaptureDisplayController {
                     if (!isResizing && selectedImage.canKeep()) {
                         break;
                     }
-                    DrawRecords record = new DrawRecords("externalImg", selectedImage, type, tick);
+                    DrawRecords record = new DrawRecords(DrawTypes.EXTERNAL_IMAGE, selectedImage, type, tick);
                     allRecordStack.push(record);
                     editType = "图片-" + type + "(" + allRecordStack.size() + ")";
                     editHistory.add(editType);
@@ -612,7 +614,7 @@ public class CaptureDisplayController {
                     if (!isResizing && selectedText.canKeep()) {
                         break;
                     }
-                    DrawRecords record = new DrawRecords("externalText", selectedText, type, tick);
+                    DrawRecords record = new DrawRecords(DrawTypes.EXTERNAL_TEXT, selectedText, type, tick);
                     allRecordStack.push(record);
                     editType = "文字-" + type + "(" + allRecordStack.size() + ")";
                     editHistory.add(editType);
@@ -621,116 +623,114 @@ public class CaptureDisplayController {
             case 10 -> {
                 editType = "绘制透明填充的圆(" + allRecordStack.size() + ")";
                 DrawType.FILLED_CIRCLE.draw(editContext, startX, startY, currentX, currentY, forecolor);
-                allRecordStack.push(new DrawRecords("filledOval", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.FILLED_OVAL, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 11 -> {
                 //绘制虚线
                 editType = "绘制虚线(" + allRecordStack.size() + ")";
                 DrawType.LINE_DASHED.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("lineDashed", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.LINE_DASHED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 12 -> {
                 //绘制双画线
                 editType = "绘制双画线(" + allRecordStack.size() + ")";
                 DrawType.LINE_DOUBLE.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("lineDouble", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.LINE_DOUBLE, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 13 -> {
                 //绘制圆角矩形
                 editType = "绘制圆角矩形(" + allRecordStack.size() + ")";
                 DrawType.RECTANGLE_ROUND.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("rectRound", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.RECT_ROUND, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 14 -> {
                 //绘制半透明圆角矩形
                 editType = "绘制半透明圆角矩形(" + allRecordStack.size() + ")";
                 DrawType.RECTANGLE_ROUND_FILLED.draw(editContext, startX, startY, currentX, currentY, forecolor);
-                allRecordStack.push(new DrawRecords("rectRoundFilled", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.RECT_ROUND_FILLED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 15 -> {
                 //绘制虚线箭头
                 editType = "绘制虚线箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW_DASHED.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("arrowDashed", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW_DASHED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 16 -> {
                 //绘制填充的箭头
                 editType = "绘制填充的箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW_FILLED.draw(editContext, startX, startY, currentX, currentY, forecolor);
-                allRecordStack.push(new DrawRecords("arrowFilled", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW_FILLED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 17 -> {
                 //绘制无填充的箭头
                 editType = "绘制无填充的箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW_EMPTY.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("arrowEmpty", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW_EMPTY, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 18 -> {
                 //绘制双向箭头
                 editType = "绘制双向箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW_TWO_DIR.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("arrowTwoDir", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW_TWO_DIR, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 19 -> {
                 //绘制双线箭头
                 editType = "绘制双线箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW_DOUBLE.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("arrowDouble", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW_DOUBLE, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 20 -> {
                 //绘制虚线圆
                 editType = "绘制虚线圆(" + allRecordStack.size() + ")";
                 DrawType.OVAL_DASHED.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("ovalDashed", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.OVAL_DASHED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 21 -> {
                 //绘制双虚线的箭头
                 editType = "绘制双虚线的箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW_DOUBLE_DASHED.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("arrowDoubleDashed", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW_DOUBLE_DASHED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 22 -> {
                 //绘制双线双向的箭头
                 editType = "绘制双线双向的箭头(" + allRecordStack.size() + ")";
                 DrawType.ARROW_DOUBLE_TWO_DIR.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("arrowDoubleTwo", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.ARROW_DOUBLE_TWO_DIR, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 23 -> {
                 //绘制圆角虚线矩形
                 editType = "绘制圆角虚线矩形(" + allRecordStack.size() + ")";
                 DrawType.RECTANGLE_ROUND_DASHED.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("rectRoundDashed", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.RECT_ROUND_DASHED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 24 -> {
                 //绘制圆角虚线半透明矩形
                 editType = "绘制圆角虚线半透明矩形(" + allRecordStack.size() + ")";
                 DrawType.RECTANGLE_ROUND_DASHED_FILLED.draw(editContext, startX, startY, currentX, currentY, forecolor);
-                allRecordStack.push(new DrawRecords("rectRoundDashedFilled", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.RECT_ROUND_DASHED_FILLED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 25 -> {
                 //绘制虚线矩形
                 editType = "绘制虚线矩形(" + allRecordStack.size() + ")";
                 DrawType.RECTANGLE_DASHED.draw(editContext, startX, startY, currentX, currentY);
-                allRecordStack.push(new DrawRecords("rectDashed", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.RECT_DASHED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 26 -> {
                 //绘制虚线半透明矩形
                 editType = "绘制虚线半透明矩形(" + allRecordStack.size() + ")";
                 DrawType.RECTANGLE_DASHED_FILLED.draw(editContext, startX, startY, currentX, currentY, forecolor);
-                allRecordStack.push(new DrawRecords("rectDashedFilled", startX, startY, currentX, currentY, null, forecolor, tick));
+                allRecordStack.push(new DrawRecords(DrawTypes.RECT_DASHED_FILLED, startX, startY, currentX, currentY, null, forecolor, tick));
             }
             case 27 -> {
-                doOCR(ImageFormatHandler.cropImage(canvas, startX, startY, currentX, currentY));
+                doOCR(ImageFormatHandler.cropImage(canvas,null ,startX, startY, currentX, currentY));
             }
             case 29 -> {
                 //crop image
                 //裁剪后分辨率减低，会有点模糊
-                BufferedImage croppedImage = ImageFormatHandler.cropImage(canvas, startX, startY, currentX, currentY);
-                try {
-                    ImageIO.write(croppedImage,"png",new File("E:/test.png"));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                //TODO 需添加裁剪撤销等功能，即需要更改drawRecord逻辑
+                //TODO 裁剪时应该将记录绘制在图片上后在裁剪 done
+                //TODO 先前的绘制会出现位置错误
+                BufferedImage croppedImage = ImageFormatHandler.cropImage(canvas,getImageWithRecords() ,startX, startY, currentX, currentY);
                 this.originalImage = ImageFormatHandler.toFXImage(croppedImage);
                 setCapture(this.originalImage,false);
             }
@@ -804,7 +804,7 @@ public class CaptureDisplayController {
     public void addExternalText(DrawableText text) {
         //TODO
         long tick = new Timestamp(System.currentTimeMillis()).getTime();
-        DrawRecords record = new DrawRecords("externalText", text, "init", tick);
+        DrawRecords record = new DrawRecords(DrawTypes.EXTERNAL_TEXT, text, "init", tick);
         allRecordStack.push(record);
         String editType = "文字-添加 " + "(" + allRecordStack.size() + ")";
         editHistory.add(editType);
@@ -831,7 +831,7 @@ public class CaptureDisplayController {
             drawableImage.setOriY(y);
             imageHandler.addExternalImage(drawableImage);
             long tick = new Timestamp(System.currentTimeMillis()).getTime();
-            DrawRecords record = new DrawRecords("externalImg", drawableImage, "init", tick);
+            DrawRecords record = new DrawRecords(DrawTypes.EXTERNAL_IMAGE, drawableImage, "init", tick);
             allRecordStack.push(record);
             selectedImage = drawableImage;
             imageHandler.drawAllImages(editArea.getGraphicsContext2D());
@@ -871,11 +871,11 @@ public class CaptureDisplayController {
         initRepaintStack(allRecordStack);
         for (int i = 0; i < repaintStack.size(); i++) {
             DrawRecords record = repaintStack.get(i);
-            if ("externalImg".equals(record.getDrawType()) && selectedImage != null && selectedImage.getImage().equals(record.getImage())) {
+            if (record.getDrawType()==DrawTypes.EXTERNAL_IMAGE && selectedImage != null && selectedImage.getImage().equals(record.getImage())) {
                 if (renderSelectedImg) {
                     record.draw(gc, animator.getGraphicsContext2D());
                 }
-            } else if ("externalText".equals(record.getDrawType()) && selectedText != null && selectedText.getValue().equals(record.getText())) {
+            } else if (record.getDrawType()==DrawTypes.EXTERNAL_TEXT && selectedText != null && selectedText.getValue().equals(record.getText())) {
                 if (renderSelectedText) {
                     record.draw(gc, animator.getGraphicsContext2D());
                 }
@@ -906,10 +906,10 @@ public class CaptureDisplayController {
     //设置记录为图片的shouldRepaint为true
     private void clearRepaintState() {
         for (DrawRecords record : allRecordStack) {
-            if ("externalImg".equals(record.getDrawType())) {
+            if (record.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                 record.setShouldRepaint(true);
             }
-            if ("externalText".equals(record.getDrawType())) {
+            if (record.getDrawType()==DrawTypes.EXTERNAL_TEXT) {
                 record.setShouldRepaint(true);
             }
         }
@@ -977,7 +977,7 @@ public class CaptureDisplayController {
             clearCanvas(animator);
             //TODO check
             long tick = new Timestamp(System.currentTimeMillis()).getTime();
-            allRecordStack.push(new DrawRecords("externalImg", selectedImage, "delete", tick));
+            allRecordStack.push(new DrawRecords(DrawTypes.EXTERNAL_IMAGE, selectedImage, "delete", tick));
             editHistory.add("删除图片(" + allRecordStack.size() + ")");
 //                        editRecordImageRender(false,selectedImage);
             repaintCanvas(editArea.getGraphicsContext2D(), false, false, true);
@@ -1016,7 +1016,7 @@ public class CaptureDisplayController {
     private void initRepaintStack(Stack<DrawRecords> recordStack) {
         repaintStack.clear();
         for (DrawRecords record : recordStack) {
-            if ("externalImg".equals(record.getDrawType())) {
+            if (record.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                 DrawRecords lastRecord = null;
                 for (DrawRecords record1 : recordStack) {
                     if (record.getImage().equals(record1.getImage())) {
@@ -1034,7 +1034,7 @@ public class CaptureDisplayController {
                     }
                     repaintStack.push(lastRecord);
                 }
-            } else if ("externalText".equals(record.getDrawType())) {
+            } else if (record.getDrawType()==DrawTypes.EXTERNAL_TEXT) {
                 DrawRecords lastRecord = null;
                 for (DrawRecords record1 : recordStack) {
                     //TODO
@@ -1070,7 +1070,8 @@ public class CaptureDisplayController {
     private void drawImageToCanvas(Image image) {
         // 获取 canvas 的 GraphicsContext
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, capture.getFitWidth(), capture.getFitHeight());
+        clearCanvas(canvas);
+        clearCanvas(editArea);
         gc.setImageSmoothing(false);
         // 在 canvas 上绘制图像
         gc.drawImage(image, 0, 0, capture.getFitWidth(), capture.getFitHeight());
@@ -1154,12 +1155,12 @@ public class CaptureDisplayController {
         //TODO
         if (!allRecordStack.isEmpty()) {  // 至少保留一个初始图像
             DrawRecords popRecord = allRecordStack.pop();
-            if ("externalImg".equals(popRecord.getDrawType())) {
+            if (popRecord.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                 if ("init".equals(popRecord.getDetailInfo())) {
                     //如果是最后一个相关记录，则设置为伪移除
                     popRecord.getDrawableImage().setUndo(true);
                 }
-            } else if ("externalText".equals(popRecord.getDrawType())) {
+            } else if (popRecord.getDrawType()==DrawTypes.EXTERNAL_TEXT) {
                 if ("init".equals(popRecord.getDetailInfo())) {
                     //如果是最后一个相关记录，则设置为伪移除
                     popRecord.getDrawableText().setUndo(true);
@@ -1169,10 +1170,10 @@ public class CaptureDisplayController {
             //如果不是最后一个，则修改为上一个的坐标
             if (!allRecordStack.isEmpty()) {
                 DrawRecords lastRecord = allRecordStack.getLast();
-                if ("externalImg".equals(lastRecord.getDrawType())) {
+                if (lastRecord.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                     selectedImage = lastRecord.getDrawableImage();
                     adjustSelectedImagePos(lastRecord);
-                } else if ("externalText".equals(lastRecord.getDrawType())) {
+                } else if (lastRecord.getDrawType()==DrawTypes.EXTERNAL_TEXT) {
                     selectedText = lastRecord.getDrawableText();
                     adjustSelectedTextPos(lastRecord);
                 } else {
@@ -1204,24 +1205,24 @@ public class CaptureDisplayController {
     public void redo() {
         if (!undoStack.isEmpty()) {
             DrawRecords popRecord = undoStack.pop();
-            if ("externalImg".equals(popRecord.getDrawType())) {
+            if (popRecord.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                 if ("init".equals(popRecord.getDetailInfo())) {
                     popRecord.getDrawableImage().setUndo(false);
                 }
-            } else if ("externalText".equals(popRecord.getDrawType())) {
+            } else if (popRecord.getDrawType()==DrawTypes.EXTERNAL_TEXT) {
                 if ("init".equals(popRecord.getDetailInfo())) {
                     popRecord.getDrawableText().setUndo(false);
                 }
             }
             if (!undoStack.isEmpty()) {
                 DrawRecords lastRecord = undoStack.getLast();
-                if ("externalImg".equals(lastRecord.getDrawType())) {
+                if (popRecord.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                     selectedImage = lastRecord.getDrawableImage();
                     if ("init".equals(popRecord.getDetailInfo())) {
                         selectedImage.setUndo(false);
                     }
                     adjustSelectedImagePos(lastRecord);
-                } else if ("externalText".equals(lastRecord.getDrawType())) {
+                } else if (popRecord.getDrawType()==DrawTypes.EXTERNAL_TEXT) {
                     selectedText = lastRecord.getDrawableText();
                     adjustSelectedTextPos(lastRecord);
                 } else {
@@ -1410,7 +1411,7 @@ public class CaptureDisplayController {
             }
         }
         for (DrawRecords re : allRecordStack) {
-            if ("externalImg".equals(re.getDrawType())) {
+            if (re.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                 imageHandler.addExternalImage(re.getDrawableImage());
             }
         }
@@ -1635,5 +1636,11 @@ public class CaptureDisplayController {
     public void setOriginalImage(Image originalImage) {
         this.originalImage = new WritableImage(originalImage.getPixelReader(),
                 (int) originalImage.getWidth(), (int) originalImage.getHeight());
+    }
+
+    public Image getImageWithRecords(){
+        repaintCanvas(canvas.getGraphicsContext2D(), true, true, false);
+        WritableImage snapshot = canvas.snapshot(null, null);
+        return snapshot;
     }
 }

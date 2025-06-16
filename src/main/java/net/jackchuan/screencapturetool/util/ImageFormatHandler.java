@@ -61,7 +61,7 @@ public class ImageFormatHandler {
         return bimg;
     }
 
-    public static BufferedImage cropImage(Canvas canvas,double startX,double startY,double currentX,double currentY){
+    public static BufferedImage cropImage(Canvas canvas,Image image,double startX,double startY,double currentX,double currentY){
         //TODO 裁剪不准确
         double imageStartX = (startX - canvas.getTranslateX()) / canvas.getScaleX();
         double imageStartY = (startY - canvas.getTranslateY()) / canvas.getScaleY();
@@ -73,7 +73,12 @@ public class ImageFormatHandler {
         // 确保起始点为左上角的坐标
         int x = (int) Math.min(imageStartX, imageEndX);
         int y = (int) Math.min(imageStartY, imageEndY);
-        BufferedImage bf = SwingFXUtils.fromFXImage(canvas.snapshot(null, null), null);
+        BufferedImage bf;
+        if(image!=null){
+            bf = SwingFXUtils.fromFXImage(image, null);
+        }else {
+            bf = SwingFXUtils.fromFXImage(canvas.snapshot(null,null),null);
+        }
         return bf.getSubimage(x, y, width, height);
     }
 
