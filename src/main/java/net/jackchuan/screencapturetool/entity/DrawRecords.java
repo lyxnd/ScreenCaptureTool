@@ -32,9 +32,11 @@ public class DrawRecords {
     private boolean shouldRepaint;
     private String text;
     private DrawTypes type;
-
+    private CropImage cropImage;
     public DrawRecords() {
     }
+
+    public record CropImage(Image beforeCrop, Image afterCrop){}
 
     public DrawRecords(DrawTypes drawType, DrawableText text, String detail, long tick) {
         this.type = drawType;
@@ -53,7 +55,7 @@ public class DrawRecords {
         if (obj instanceof DrawRecords record) {
             boolean type = this.getDrawType().equals(record.getDrawType());
             if (type) {
-                if ("externalImg".equals(getDrawType())) {
+                if (getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                     return image.equals(record.getImage());
                 } else {
                     return getEditTick() == record.getEditTick();
@@ -73,6 +75,17 @@ public class DrawRecords {
         this.endX = endX;
         this.endY = endY;
         this.image = img;
+        this.color = color;
+        this.editTick = tick;
+    }
+    public DrawRecords(DrawTypes drawType, double startX, double startY, double endX, double endY,
+                       WritableImage beforeCrop,Image afterCrop, Color color, long tick) {
+        this.type = drawType;
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY;
+        this.cropImage=new CropImage(beforeCrop,afterCrop);
         this.color = color;
         this.editTick = tick;
     }
@@ -214,6 +227,10 @@ public class DrawRecords {
 
     }
 
+    public CropImage getCropImage() {
+        return cropImage;
+    }
+
     public DrawableImage getDrawableImage() {
         return drawableImage;
     }
@@ -270,14 +287,6 @@ public class DrawRecords {
     public void setEditTick(long editTick) {
         this.editTick = editTick;
     }
-    //    public boolean isShouldExchange() {
-//        return shouldExchange;
-//    }
-//
-//    public void setShouldExchange(boolean shouldExchange) {
-//        this.shouldExchange = shouldExchange;
-//    }
-
     public boolean isShouldRender() {
         return shouldRender;
     }
@@ -358,13 +367,6 @@ public class DrawRecords {
         this.image = image;
     }
 
-//    public boolean isChangeRender() {
-//        return changeRender;
-//    }
-//
-//    public void setChangeRender(boolean changeRender) {
-//        this.changeRender = changeRender;
-//    }
 
     public String getDetailInfo() {
         return detailInfo;

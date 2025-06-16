@@ -45,7 +45,7 @@ public class TextRecognitionStage extends Stage {
         });
         copy.setOnAction(e->copy());
         this.setScene(scene);
-        this.setX(parent.getX()+parent.getWidth());
+        this.setX(parent.getX()+parent.getWidth()/2);
         this.setY(parent.getY());
         this.setTitle("-识别结果-");
         cancelTop.setSelected(true);

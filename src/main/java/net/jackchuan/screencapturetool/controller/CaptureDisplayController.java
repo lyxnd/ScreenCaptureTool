@@ -729,10 +729,10 @@ public class CaptureDisplayController {
                 //裁剪后分辨率减低，会有点模糊
                 //TODO 需添加裁剪撤销等功能，即需要更改drawRecord逻辑
                 //TODO 裁剪时应该将记录绘制在图片上后在裁剪 done
-                //TODO 先前的绘制会出现位置错误
                 BufferedImage croppedImage = ImageFormatHandler.cropImage(canvas,getImageWithRecords() ,startX, startY, currentX, currentY);
-                this.originalImage = ImageFormatHandler.toFXImage(croppedImage);
-                setCapture(this.originalImage,false);
+                WritableImage croppedFxImage = ImageFormatHandler.toFXImage(croppedImage);
+                allRecordStack.push(new DrawRecords(DrawTypes.CROP, startX, startY, currentX, currentY,getImageWithRecords(),croppedFxImage , forecolor, tick));
+                setCapture(croppedFxImage,ScreenCaptureUtil.shouldScale(croppedFxImage));
             }
             default -> editType = "未知操作(" + allRecordStack.size() + ")";
         }
@@ -747,6 +747,7 @@ public class CaptureDisplayController {
     public void doOCR(BufferedImage image) {
         CompletableFuture.supplyAsync(() -> {
             Tesseract localTess = new Tesseract();
+            //TODO 设置语言识别选项，可以自行设置模型
             localTess.setLanguage("chi_sim+eng");
             localTess.setDatapath(CaptureProperties.ocrPath);
             try {
@@ -1063,7 +1064,9 @@ public class CaptureDisplayController {
     public WritableImage getSnapshot(Canvas canvas) {
         SnapshotParameters parameters = new SnapshotParameters();
         parameters.setTransform(Transform.scale(CaptureProperties.scale, CaptureProperties.scale));  // 扩大图像
-        return canvas.snapshot(parameters, null);
+        WritableImage image=new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
+        canvas.snapshot(parameters, image);
+        return image;
     }
 
     // 将 ImageView 中的图片绘制到 Canvas 上
@@ -1102,7 +1105,8 @@ public class CaptureDisplayController {
         SnapshotParameters parameters = new SnapshotParameters();
         parameters.setTransform(Transform.scale(CaptureProperties.scale, CaptureProperties.scale));  // 扩大图像
         repaintCanvas(canvas.getGraphicsContext2D(), true, true, false);
-        WritableImage writableImage = canvas.snapshot(parameters, null);
+        WritableImage writableImage = new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
+        canvas.snapshot(parameters, writableImage);
         // 转换为 BufferedImage
         BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
         // 保存为文件
@@ -1134,7 +1138,8 @@ public class CaptureDisplayController {
         SnapshotParameters parameters = new SnapshotParameters();
         parameters.setTransform(Transform.scale(CaptureProperties.scale, CaptureProperties.scale));  // 扩大图像
         repaintCanvas(canvas.getGraphicsContext2D(), true, true, false);
-        WritableImage writableImage = canvas.snapshot(parameters, null);
+        WritableImage writableImage = new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
+        canvas.snapshot(parameters, writableImage);
         TransferableImage transferableImage = new TransferableImage(writableImage);
         // 复制到剪贴板
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferableImage, null);
@@ -1155,6 +1160,18 @@ public class CaptureDisplayController {
         //TODO
         if (!allRecordStack.isEmpty()) {  // 至少保留一个初始图像
             DrawRecords popRecord = allRecordStack.pop();
+            if(popRecord.getDrawType()==DrawTypes.CROP){
+                try {
+                    ImageIO.write(ImageFormatHandler.toBufferedImage(popRecord.getCropImage().beforeCrop()),
+                            "png",new File("E:/before.png"));
+                    ImageIO.write(ImageFormatHandler.toBufferedImage(popRecord.getCropImage().afterCrop()),
+                            "png",new File("E:/aftr.png"));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                Image image = popRecord.getCropImage().beforeCrop();
+                setCapture(image,ScreenCaptureUtil.shouldScale(image));
+            }
             if (popRecord.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                 if ("init".equals(popRecord.getDetailInfo())) {
                     //如果是最后一个相关记录，则设置为伪移除
@@ -1177,10 +1194,12 @@ public class CaptureDisplayController {
                     selectedText = lastRecord.getDrawableText();
                     adjustSelectedTextPos(lastRecord);
                 } else {
+
                     selectedImage = null;
                     selectedText = null;
                 }
             }
+
             clearCanvas(animator);
             repaintCanvas(editArea.getGraphicsContext2D(), true, true, true);
         }
@@ -1205,6 +1224,18 @@ public class CaptureDisplayController {
     public void redo() {
         if (!undoStack.isEmpty()) {
             DrawRecords popRecord = undoStack.pop();
+            if(popRecord.getDrawType()==DrawTypes.CROP){
+                try {
+                    ImageIO.write(ImageFormatHandler.toBufferedImage(popRecord.getCropImage().beforeCrop()),
+                            "png",new File("E:/before.png"));
+                    ImageIO.write(ImageFormatHandler.toBufferedImage(popRecord.getCropImage().afterCrop()),
+                            "png",new File("E:/aftr.png"));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                Image image = popRecord.getCropImage().afterCrop();
+                setCapture(image,ScreenCaptureUtil.shouldScale(image));
+            }
             if (popRecord.getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
                 if ("init".equals(popRecord.getDetailInfo())) {
                     popRecord.getDrawableImage().setUndo(false);
@@ -1638,9 +1669,13 @@ public class CaptureDisplayController {
                 (int) originalImage.getWidth(), (int) originalImage.getHeight());
     }
 
-    public Image getImageWithRecords(){
+    public WritableImage getImageWithRecords(){
         repaintCanvas(canvas.getGraphicsContext2D(), true, true, false);
-        WritableImage snapshot = canvas.snapshot(null, null);
-        return snapshot;
+        SnapshotParameters params = new SnapshotParameters();
+        params.setTransform(Transform.scale(ScreenCaptureUtil.SCALE, ScreenCaptureUtil.SCALE));
+        WritableImage snapshotImage = new WritableImage((int)(canvas.getWidth() * ScreenCaptureUtil.SCALE),
+                (int)(canvas.getHeight() * ScreenCaptureUtil.SCALE));
+        canvas.snapshot(params, snapshotImage);
+        return snapshotImage;
     }
 }

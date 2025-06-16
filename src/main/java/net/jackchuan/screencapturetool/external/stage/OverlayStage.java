@@ -227,7 +227,7 @@ public class OverlayStage extends Stage {
         scene.getStylesheets().add(ScreenCaptureToolApp.class.getResource("assets/css/style.css").toExternalForm());
         // 设置控制器
         CaptureDisplayController controller = loader.getController();
-        controller.setCapture(image,true);
+        controller.setCapture(image,ScreenCaptureUtil.shouldScale(image));
         controller.setOriginalImage(image);
         // 设置场景并显示窗口
         displayStage.setScene(scene);

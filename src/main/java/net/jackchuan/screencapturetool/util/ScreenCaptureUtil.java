@@ -2,6 +2,7 @@ package net.jackchuan.screencapturetool.util;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.image.WritableImage;
 import javafx.util.Pair;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import org.opencv.core.Mat;
@@ -21,6 +22,7 @@ public class ScreenCaptureUtil {
     public static int PHYSICAL_SIZE=0;
     public static int DEFAULT_SIZE=1;
     public static double SCALE = getScreenScale();
+    public static Pair<Integer,Integer> SIZE = getScreenSize(DEFAULT_SIZE);
 
     public static BufferedImage captureWithPython(int x, int y, int width, int height) throws FileNotFoundException {
         BufferedImage image=null;
@@ -207,5 +209,9 @@ public class ScreenCaptureUtil {
         // 设置临时文件可执行权限（部分系统可能需要）
         tempScriptFile.setExecutable(true);
         return tempScriptFile;
+    }
+
+    public static boolean shouldScale(javafx.scene.image.Image croppedFxImage) {
+        return croppedFxImage.getWidth()>SIZE.getKey()-150||croppedFxImage.getHeight()>SIZE.getValue()-150;
     }
 }

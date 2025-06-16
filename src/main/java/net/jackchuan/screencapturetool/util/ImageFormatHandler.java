@@ -1,10 +1,12 @@
 package net.jackchuan.screencapturetool.util;
 
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.*;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import javafx.scene.transform.Transform;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -57,16 +59,14 @@ public class ImageFormatHandler {
             pixelReader.getPixels(0, y, width, 1, format, buffer, 0, width);
             bimg.getRaster().setDataElements(0, y, width, 1, buffer);
         }
-
         return bimg;
     }
 
     public static BufferedImage cropImage(Canvas canvas,Image image,double startX,double startY,double currentX,double currentY){
-        //TODO 裁剪不准确
-        double imageStartX = (startX - canvas.getTranslateX()) / canvas.getScaleX();
-        double imageStartY = (startY - canvas.getTranslateY()) / canvas.getScaleY();
-        double imageEndX = (currentX - canvas.getTranslateX()) / canvas.getScaleX();
-        double imageEndY = (currentY - canvas.getTranslateY()) / canvas.getScaleY();
+        double imageStartX = (startX - canvas.getTranslateX()) / canvas.getScaleX()*ScreenCaptureUtil.SCALE;
+        double imageStartY = (startY - canvas.getTranslateY()) / canvas.getScaleY()*ScreenCaptureUtil.SCALE;
+        double imageEndX = (currentX - canvas.getTranslateX()) / canvas.getScaleX()*ScreenCaptureUtil.SCALE;
+        double imageEndY = (currentY - canvas.getTranslateY()) / canvas.getScaleY()*ScreenCaptureUtil.SCALE;
         // 计算矩形区域的宽度和高度
         int width = (int) Math.abs(imageEndX - imageStartX);
         int height = (int) Math.abs(imageEndY - imageStartY);
@@ -77,7 +77,12 @@ public class ImageFormatHandler {
         if(image!=null){
             bf = SwingFXUtils.fromFXImage(image, null);
         }else {
-            bf = SwingFXUtils.fromFXImage(canvas.snapshot(null,null),null);
+            SnapshotParameters params = new SnapshotParameters();
+            params.setTransform(Transform.scale(ScreenCaptureUtil.SCALE, ScreenCaptureUtil.SCALE));
+            WritableImage snapshotImage = new WritableImage((int)(canvas.getWidth() * ScreenCaptureUtil.SCALE),
+                    (int)(canvas.getHeight() * ScreenCaptureUtil.SCALE));
+            canvas.snapshot(params, snapshotImage);
+            bf = SwingFXUtils.fromFXImage(snapshotImage,null);
         }
         return bf.getSubimage(x, y, width, height);
     }
