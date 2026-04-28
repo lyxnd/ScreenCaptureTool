@@ -9,6 +9,11 @@ module net.jackchuan.screencapturetool {
     requires com.github.kwhat.jnativehook;
     requires java.compiler;
     requires net.sourceforge.tess4j;
+    requires org.apache.logging.log4j;
+    requires org.apache.logging.log4j.core;
+    requires com.sun.jna.platform;
+    requires static lombok;
+    requires jdk.management;
 
 
     opens net.jackchuan.screencapturetool to javafx.fxml;
@@ -17,5 +22,6 @@ module net.jackchuan.screencapturetool {
     opens net.jackchuan.screencapturetool.controller to javafx.fxml;
     exports net.jackchuan.screencapturetool;
     exports net.jackchuan.screencapturetool.test;
+    exports net.jackchuan.screencapturetool.util;
 
 }

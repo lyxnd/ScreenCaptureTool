@@ -1,7 +1,12 @@
 package net.jackchuan.screencapturetool.util;
 
+import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import lombok.Getter;
+import net.jackchuan.screencapturetool.CaptureProperties;
 import net.jackchuan.screencapturetool.entity.StageInstance;
 import net.jackchuan.screencapturetool.external.stage.ProgressStage;
 
@@ -10,6 +15,10 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -20,7 +29,8 @@ import java.util.zip.ZipInputStream;
  * 日期：2024/12/23 12:19
  */
 public class FileHandler {
-
+    @Getter
+    private static ScheduledExecutorService scheduledTask = Executors.newScheduledThreadPool(2);
     public static boolean saveImage(BufferedImage img, String path) throws IOException {
         return ImageIO.write(img, "png", new File(path));
     }
@@ -94,6 +104,27 @@ public class FileHandler {
         new File(zipFilePath).delete();
     }
 
+    public static boolean copyImage(Image img) {
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent content = new ClipboardContent();
+        Path temp = Paths.get(CaptureProperties.exePath).getParent().resolve("temp");
+        try {
+            if (!Files.exists(temp)) {
+                Files.createDirectory(temp);
+            }
+            File tempFile = Files.createFile(temp.resolve(System.currentTimeMillis() + ".png")).toFile();
+            ImageIO.write(ImageFormatHandler.toBufferedImage(img),"png",tempFile);
+            ArrayList<File> list = new ArrayList<>();
+            list.add(tempFile);
+            boolean b = content.putFiles(list);
+            clipboard.setContent(content);
+            scheduledTask.schedule(()->list.forEach(File::delete),25, TimeUnit.SECONDS);
+            return b;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void moveToAnotherDirectory(Path sourceDir,Path targetDir) throws IOException {
         if (!Files.exists(targetDir)) {
             Files.createDirectories(targetDir);
@@ -102,8 +133,7 @@ public class FileHandler {
         // 遍历源目录及其子目录
         Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                // 构建目标文件路径
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {// 构建目标文件路径
                 Path targetFile = targetDir.resolve(sourceDir.relativize(file));
 
                 // 创建目标文件的父目录（如果不存在的话）

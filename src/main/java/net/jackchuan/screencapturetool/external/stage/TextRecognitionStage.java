@@ -2,8 +2,8 @@ package net.jackchuan.screencapturetool.external.stage;
 
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.Button;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.FlowPane;
@@ -25,13 +25,16 @@ public class TextRecognitionStage extends Stage {
     private VBox vBox;
     private FlowPane flowPane;
     private Button copy;
+    private Button reduce;
     private RadioButton cancelTop;
     public TextRecognitionStage(String text,Stage parent){
         copy=new Button("Copy");
+        reduce=new Button("Reduce");
+        reduce.setTooltip(new Tooltip("删除空格"));
         cancelTop=new RadioButton("always on top");
         flowPane=new FlowPane();
         flowPane.setAlignment(Pos.CENTER_RIGHT);
-        flowPane.getChildren().addAll(cancelTop,copy);
+        flowPane.getChildren().addAll(cancelTop,copy,reduce);
         vBox=new VBox();
         textArea=new TextArea(text);
         scrollPane=new ScrollPane(textArea);
@@ -44,6 +47,11 @@ public class TextRecognitionStage extends Stage {
             setAlwaysOnTop(newVal);
         });
         copy.setOnAction(e->copy());
+        reduce.setOnAction(e->{
+            String content = textArea.getText().replaceAll(" ","");
+            textArea.setText(content);
+
+        });
         this.setScene(scene);
         this.setX(parent.getX()+parent.getWidth()/2);
         this.setY(parent.getY());

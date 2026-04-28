@@ -1,5 +1,10 @@
 package net.jackchuan.screencapturetool.util;
 
+import com.sun.jna.Memory;
+import com.sun.jna.platform.win32.GDI32;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinGDI;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.WritableImage;
@@ -65,88 +70,88 @@ public class ScreenCaptureUtil {
         return image;
     }
 
-    public static BufferedImage captureWithJNA(int x, int y, int width, int height) throws AWTException {
-        Mat frame = new Mat();
-        VideoCapture capture = new VideoCapture(0); // 使用 0 表示主摄像头
-
-        if (capture.isOpened()) {
-            capture.read(frame);
-            Imgcodecs.imwrite("screenshot.jpg", frame);
-            System.out.println("Screenshot saved!");
-        }
-        capture.release();
-        return captureWithFX(x, y, width, height);
-    }
-
-//    public static BufferedImage captureWithJNA(int x, int y, int width, int height) {
-//        User32 user32 = User32.INSTANCE;
-//        GDI32 gdi32 = GDI32.INSTANCE;
+//    public static BufferedImage captureWithJNA(int x, int y, int width, int height) throws AWTException {
+//        Mat frame = new Mat();
+//        VideoCapture capture = new VideoCapture(0); // 使用 0 表示主摄像头
 //
-//        WinDef.HWND desktopWindow = user32.GetDesktopWindow();
-//        WinDef.HDC hdcWindow = user32.GetDC(desktopWindow);
-//
-//        // 获取 DPI 缩放比例
-//        int dpiX = gdi32.GetDeviceCaps(hdcWindow, net.jackchuan.screencapturetool.util.impl.GDI32.LOGPIXELSX);
-//        int dpiY = gdi32.GetDeviceCaps(hdcWindow, net.jackchuan.screencapturetool.util.impl.GDI32.LOGPIXELSY);
-//        double scaleX = dpiX / 96.0;
-//        double scaleY = dpiY / 96.0;
-//
-//        // 调整坐标和尺寸
-//        int adjustedX = (int) (x * scaleX);
-//        int adjustedY = (int) (y * scaleY);
-//        int adjustedWidth = (int) (width * scaleX);
-//        int adjustedHeight = (int) (height * scaleY);
-//
-//        // 创建内存 DC 和位图
-//        WinDef.HDC hdcMemDC = gdi32.CreateCompatibleDC(hdcWindow);
-//        WinDef.HBITMAP hBitmap = gdi32.CreateCompatibleBitmap(hdcWindow, adjustedWidth, adjustedHeight);
-//        if (hBitmap == null) {
-//            throw new RuntimeException("Failed to create compatible bitmap.");
+//        if (capture.isOpened()) {
+//            capture.read(frame);
+//            Imgcodecs.imwrite("screenshot.jpg", frame);
+//            System.out.println("Screenshot saved!");
 //        }
-//        gdi32.SelectObject(hdcMemDC, hBitmap);
-//
-//        // 将屏幕内容复制到内存 DC
-//        boolean bitBltResult = gdi32.BitBlt(hdcMemDC, 0, 0, adjustedWidth, adjustedHeight, hdcWindow, adjustedX, adjustedY, SRCCOPY);
-//        if (!bitBltResult) {
-//            throw new RuntimeException("BitBlt failed.");
-//        }
-//
-//        // 获取位图数据
-//        WinGDI.BITMAPINFO bmpInfo = new WinGDI.BITMAPINFO();
-//        bmpInfo.bmiHeader.biSize = new WinDef.DWORD(bmpInfo.bmiHeader.size()).intValue();
-//        bmpInfo.bmiHeader.biWidth = adjustedWidth;
-//        bmpInfo.bmiHeader.biHeight = -adjustedHeight; // 顶部朝上
-//        bmpInfo.bmiHeader.biPlanes = 1;
-//        bmpInfo.bmiHeader.biBitCount = 32; // 每像素 32 位 (ARGB)
-//        bmpInfo.bmiHeader.biCompression = WinGDI.BI_RGB;
-//
-//        int bufferSize = adjustedWidth * adjustedHeight * 4; // 每像素 4 字节
-//        Memory buffer = new Memory(bufferSize);
-//
-//        int result = gdi32.GetDIBits(hdcWindow, hBitmap, 0, adjustedHeight, buffer, bmpInfo, WinGDI.DIB_RGB_COLORS);
-//        if (result == 0) {
-//            throw new RuntimeException("GetDIBits failed.");
-//        }
-//
-//        // 转换为 BufferedImage
-//        BufferedImage image = new BufferedImage(adjustedWidth, adjustedHeight, BufferedImage.TYPE_INT_ARGB);
-//        int[] rgbArray = new int[adjustedWidth * adjustedHeight];
-//        for (int i = 0; i < rgbArray.length; i++) {
-//            int b = buffer.getByte(i * 4) & 0xFF;
-//            int g = buffer.getByte(i * 4 + 1) & 0xFF;
-//            int r = buffer.getByte(i * 4 + 2) & 0xFF;
-//            int a = buffer.getByte(i * 4 + 3) & 0xFF;
-//            rgbArray[i] = (a << 24) | (r << 16) | (g << 8) | b;
-//        }
-//        image.setRGB(0, 0, adjustedWidth, adjustedHeight, rgbArray, 0, adjustedWidth);
-//
-//        // 释放资源
-//        user32.ReleaseDC(desktopWindow, hdcWindow);
-//        gdi32.DeleteObject(hBitmap);
-//        gdi32.DeleteDC(hdcMemDC);
-//
-//        return image;
+//        capture.release();
+//        return captureWithFX(x, y, width, height);
 //    }
+
+    public static BufferedImage captureWithJNA(int x, int y, int width, int height) {
+        User32 user32 = User32.INSTANCE;
+        GDI32 gdi32 = GDI32.INSTANCE;
+
+        WinDef.HWND desktopWindow = user32.GetDesktopWindow();
+        WinDef.HDC hdcWindow = user32.GetDC(desktopWindow);
+
+        // 获取 DPI 缩放比例
+        int dpiX = gdi32.GetDeviceCaps(hdcWindow, net.jackchuan.screencapturetool.util.impl.GDI32.LOGPIXELSX);
+        int dpiY = gdi32.GetDeviceCaps(hdcWindow, net.jackchuan.screencapturetool.util.impl.GDI32.LOGPIXELSY);
+        double scaleX = dpiX / 96.0;
+        double scaleY = dpiY / 96.0;
+
+        // 调整坐标和尺寸
+        int adjustedX = (int) (x * scaleX);
+        int adjustedY = (int) (y * scaleY);
+        int adjustedWidth = (int) (width * scaleX);
+        int adjustedHeight = (int) (height * scaleY);
+
+        // 创建内存 DC 和位图
+        WinDef.HDC hdcMemDC = gdi32.CreateCompatibleDC(hdcWindow);
+        WinDef.HBITMAP hBitmap = gdi32.CreateCompatibleBitmap(hdcWindow, adjustedWidth, adjustedHeight);
+        if (hBitmap == null) {
+            throw new RuntimeException("Failed to create compatible bitmap.");
+        }
+        gdi32.SelectObject(hdcMemDC, hBitmap);
+
+        // 将屏幕内容复制到内存 DC
+        boolean bitBltResult = gdi32.BitBlt(hdcMemDC, 0, 0, adjustedWidth, adjustedHeight, hdcWindow, adjustedX, adjustedY, SRCCOPY);
+        if (!bitBltResult) {
+            throw new RuntimeException("BitBlt failed.");
+        }
+
+        // 获取位图数据
+        WinGDI.BITMAPINFO bmpInfo = new WinGDI.BITMAPINFO();
+        bmpInfo.bmiHeader.biSize = new WinDef.DWORD(bmpInfo.bmiHeader.size()).intValue();
+        bmpInfo.bmiHeader.biWidth = adjustedWidth;
+        bmpInfo.bmiHeader.biHeight = -adjustedHeight; // 顶部朝上
+        bmpInfo.bmiHeader.biPlanes = 1;
+        bmpInfo.bmiHeader.biBitCount = 32; // 每像素 32 位 (ARGB)
+        bmpInfo.bmiHeader.biCompression = WinGDI.BI_RGB;
+
+        int bufferSize = adjustedWidth * adjustedHeight * 4; // 每像素 4 字节
+        Memory buffer = new Memory(bufferSize);
+
+        int result = gdi32.GetDIBits(hdcWindow, hBitmap, 0, adjustedHeight, buffer, bmpInfo, WinGDI.DIB_RGB_COLORS);
+        if (result == 0) {
+            throw new RuntimeException("GetDIBits failed.");
+        }
+
+        // 转换为 BufferedImage
+        BufferedImage image = new BufferedImage(adjustedWidth, adjustedHeight, BufferedImage.TYPE_INT_ARGB);
+        int[] rgbArray = new int[adjustedWidth * adjustedHeight];
+        for (int i = 0; i < rgbArray.length; i++) {
+            int b = buffer.getByte(i * 4) & 0xFF;
+            int g = buffer.getByte(i * 4 + 1) & 0xFF;
+            int r = buffer.getByte(i * 4 + 2) & 0xFF;
+            int a = buffer.getByte(i * 4 + 3) & 0xFF;
+            rgbArray[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+        image.setRGB(0, 0, adjustedWidth, adjustedHeight, rgbArray, 0, adjustedWidth);
+
+        // 释放资源
+        user32.ReleaseDC(desktopWindow, hdcWindow);
+        gdi32.DeleteObject(hBitmap);
+        gdi32.DeleteDC(hdcMemDC);
+
+        return image;
+    }
 
 
     public static BufferedImage captureWithAWT(int x,int y,int width,int height) throws AWTException {

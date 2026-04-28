@@ -1,12 +1,16 @@
 package net.jackchuan.screencapturetool.entity;
 
+import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import lombok.Data;
 import net.jackchuan.screencapturetool.external.ExternalImageHandler.DrawableImage;
 import net.jackchuan.screencapturetool.external.ExternalTextHandler.DrawableText;
 import net.jackchuan.screencapturetool.util.impl.DrawType;
+
+import java.util.List;
 
 
 /**
@@ -14,6 +18,7 @@ import net.jackchuan.screencapturetool.util.impl.DrawType;
  * 作者：jackchuan
  * 日期：2024/12/12 13:26
  */
+@Data
 public class DrawRecords {
     private double startX;
     private double startY;
@@ -33,6 +38,8 @@ public class DrawRecords {
     private String text;
     private DrawTypes type;
     private CropImage cropImage;
+    private List<Point2D> handPoints;
+    private int strokeWidth;
     public DrawRecords() {
     }
 
@@ -53,9 +60,9 @@ public class DrawRecords {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DrawRecords record) {
-            boolean type = this.getDrawType().equals(record.getDrawType());
+            boolean type = this.getType().equals(record.getType());
             if (type) {
-                if (getDrawType()==DrawTypes.EXTERNAL_IMAGE) {
+                if (getType()==DrawTypes.EXTERNAL_IMAGE) {
                     return image.equals(record.getImage());
                 } else {
                     return getEditTick() == record.getEditTick();
@@ -68,8 +75,10 @@ public class DrawRecords {
         }
     }
 
-    public DrawRecords(DrawTypes drawType, double startX, double startY, double endX, double endY, WritableImage img, Color color, long tick) {
+    public DrawRecords(DrawTypes drawType, double startX, double startY,
+                       double endX, double endY, WritableImage img, Color color, long tick,int strokeWidth) {
         this.type = drawType;
+        this.strokeWidth=strokeWidth;
         this.startX = startX;
         this.startY = startY;
         this.endX = endX;
@@ -77,6 +86,13 @@ public class DrawRecords {
         this.image = img;
         this.color = color;
         this.editTick = tick;
+    }
+    public DrawRecords(DrawTypes drawType, List<Point2D> handPoints, Color color, long tick,int strokeWidth) {
+        this.type = drawType;
+        this.strokeWidth=strokeWidth;
+        this.color = color;
+        this.editTick = tick;
+        this.handPoints = handPoints;
     }
     public DrawRecords(DrawTypes drawType, double startX, double startY, double endX, double endY,
                        WritableImage beforeCrop,Image afterCrop, Color color, long tick) {
@@ -105,9 +121,21 @@ public class DrawRecords {
     public void draw(GraphicsContext gc, GraphicsContext animatorGc) {
         gc.setStroke(color);
         gc.setFill(color);
+        gc.setLineWidth(strokeWidth);
         switch (type) {
             case DrawTypes.COMMON->{
-
+                for(int i=1;i<=handPoints.size()-1;i++) {
+                    Point2D lastPoint = handPoints.get(i-1);
+                    Point2D nowPoint = handPoints.get(i);
+                    gc.strokeLine(lastPoint.getX(), lastPoint.getY(), nowPoint.getX(), nowPoint.getY());
+                }
+            }
+            case DrawTypes.ERASER->{
+                for(int i=1;i<=handPoints.size()-1;i++) {
+                    Point2D lastPoint = handPoints.get(i-1);
+                    Point2D nowPoint = handPoints.get(i);
+                    gc.clearRect(lastPoint.getX(), lastPoint.getY(),strokeWidth*10,strokeWidth*10);
+                }
             }
             case DrawTypes.RECT -> {
                 DrawType.RECTANGLE.draw(gc, startX, startY, endX, endY);
@@ -225,155 +253,6 @@ public class DrawRecords {
 
     public void print() {
 
-    }
-
-    public CropImage getCropImage() {
-        return cropImage;
-    }
-
-    public DrawableImage getDrawableImage() {
-        return drawableImage;
-    }
-
-    public void setDrawableImage(DrawableImage drawableImage) {
-        this.drawableImage = drawableImage;
-    }
-
-    public void setShouldRepaint(boolean shouldRepaint) {
-        this.shouldRepaint = shouldRepaint;
-    }
-
-    public boolean isShouldRepaint() {
-        return shouldRepaint;
-    }
-
-    public void setWidth(double width) {
-        this.width = width;
-    }
-
-    public DrawableText getDrawableText() {
-        return drawableText;
-    }
-
-    public void setDrawableText(DrawableText drawableText) {
-        this.drawableText = drawableText;
-    }
-
-    public void setHeight(double height) {
-        this.height = height;
-    }
-
-    public double getWidth() {
-        return width;
-    }
-
-    public double getHeight() {
-        return height;
-    }
-
-
-    public long getEditTick() {
-        return editTick;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public void setEditTick(long editTick) {
-        this.editTick = editTick;
-    }
-    public boolean isShouldRender() {
-        return shouldRender;
-    }
-
-    public void setShouldRender(boolean shouldRender) {
-        this.shouldRender = shouldRender;
-    }
-
-    public void setScaleX(double scaleX) {
-        this.scaleX = scaleX;
-    }
-
-    public void setScaleY(double scaleY) {
-        this.scaleY = scaleY;
-    }
-
-    public double getScaleX() {
-        return scaleX;
-    }
-
-    public double getScaleY() {
-        return scaleY;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
-    public void setDrawType(DrawTypes drawType) {
-        this.type = drawType;
-    }
-
-    public void setEndX(double endX) {
-        this.endX = endX;
-    }
-
-    public void setEndY(double endY) {
-        this.endY = endY;
-    }
-
-    public void setStartY(double startY) {
-        this.startY = startY;
-    }
-
-    public void setStartX(double startX) {
-        this.startX = startX;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public double getEndX() {
-        return endX;
-    }
-
-    public double getEndY() {
-        return endY;
-    }
-
-    public double getStartX() {
-        return startX;
-    }
-
-    public double getStartY() {
-        return startY;
-    }
-
-    public DrawTypes getDrawType() {
-        return type;
-    }
-
-    public Image getImage() {
-        return image;
-    }
-
-    public void setImage(Image image) {
-        this.image = image;
-    }
-
-
-    public String getDetailInfo() {
-        return detailInfo;
-    }
-
-    public void setDetailInfo(String detailInfo) {
-        this.detailInfo = detailInfo;
     }
 
     @Override

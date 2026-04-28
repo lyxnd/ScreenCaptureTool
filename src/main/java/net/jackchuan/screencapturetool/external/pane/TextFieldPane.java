@@ -55,7 +55,7 @@ public class TextFieldPane extends Pane {
             textField.setFocusTraversable(false);
         });
         textField.setOnMouseDragged(e -> {
-            if (controller.isAltPressed() && controller.isMoving()) {
+            if (controller.isMoving()&&e.isAltDown()) {
                 textField.setLayoutX(e.getSceneX());
                 textField.setLayoutY(e.getSceneY() - controller.getToolBarHeight());
             }

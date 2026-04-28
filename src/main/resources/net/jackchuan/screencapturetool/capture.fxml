@@ -14,7 +14,7 @@
 <?import net.jackchuan.screencapturetool.external.picker.LinePicker?>
 <?import net.jackchuan.screencapturetool.external.picker.OCRPicker?>
 <BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
+            xmlns:fx="http://javafx.com/fxml" fx:id="captureRoot"
             fx:controller="net.jackchuan.screencapturetool.controller.CaptureDisplayController"
             prefHeight="400.0" prefWidth="600.0">
 
@@ -223,13 +223,19 @@
             <ComboBox fx:id="processType" value="选择处理类型">
                 <items>
                     <FXCollections fx:factory="observableArrayList">
-                        <String fx:value="锐化"/>
+                        <String fx:value="拉普拉斯锐化"/>
                         <String fx:value="均值平滑"/>
                         <String fx:value="高斯平滑"/>
-                        <String fx:value="分割"/>
+                        <String fx:value="中值平滑"/>
+                        <String fx:value="同态滤波"/>
+                        <String fx:value="垂直/水平边缘提取"/>
                         <String fx:value="灰化"/>
+                        <String fx:value="反转"/>
                         <String fx:value="边缘提取"/>
-                        <String fx:value="人脸识别"/>
+                        <String fx:value="前景分割"/>
+                        <String fx:value="区域生长分割"/>
+                        <String fx:value="对比度增强"/>
+                        <String fx:value="直方图均衡化"/>
                     </FXCollections>
                 </items>
             </ComboBox>
@@ -271,13 +277,13 @@
 
     <center>
         <StackPane fx:id="stackPane">
-            <Canvas fx:id="canvas" />
+            <Canvas fx:id="canvas" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS"/>
         </StackPane>
     </center>
     <bottom>
         <HBox alignment="CENTER">
             <Label fx:id="state" style="-fx-font-weight: bold;-fx-text-fill: blue;"/>
-            <Button text="test" onAction="#adjustScale"/>
+            <Button text="展示原始图像" onAction="#adjustScale"><tooltip><Tooltip text="恢复原始显示尺寸"/></tooltip></Button>
             <Button text="test1" onAction="#test1"/>
         </HBox>
     </bottom>

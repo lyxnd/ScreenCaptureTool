@@ -13,9 +13,11 @@ import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 功能：
@@ -34,9 +36,13 @@ public class CaptureProperties {
     public static boolean redo;
     public static String captureType="Python's pillow";
     public static int CAPTURE_KEY;
-    public static boolean isShiftNeeded=true;
+    public static int UPLOAD_KEY=59;
+    public static boolean isShiftNeeded=false;
     public static boolean isAltNeeded=false;
     public static boolean isCtrlNeeded=false;
+    public static boolean uploadIsShiftNeeded=false;
+    public static boolean uploadIsAltNeeded=false;
+    public static boolean uploadIsCtrlNeeded=false;
     public static boolean autoCopy;
     public static boolean autoSelect;
     public static boolean autoLaunch;
@@ -46,20 +52,12 @@ public class CaptureProperties {
     public static String configPath;
     public static String selectPath="D:/";
     public static String exePath="";
-    public static String logPath="F:/captureToolLog.txt";
-    public static double scale;
-    public static double width;
-    public static double height;
+    public static String logPath="D:/captureToolLog.log";
     public static boolean ocrFileInstalled=false;
     public static String ocrPath;
     public static boolean showSettings=true;
+    public static boolean paste;
 
-    static {
-        Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
-        scale= ScreenCaptureUtil.getScreenScale();
-        width=size.getWidth();
-        height=size.getHeight();
-    }
 
     public static void updateAll(boolean flag){
         enableAll = flag;
@@ -71,6 +69,7 @@ public class CaptureProperties {
         rubber = flag;
         undo = flag;
         redo = flag;
+        paste = flag;
     }
 
     public static boolean loadProperties() throws IOException {
@@ -78,7 +77,7 @@ public class CaptureProperties {
         if(file.exists()){
             try(BufferedReader reader=new BufferedReader(new FileReader(file))){
                 configPath = reader.readLine();
-                if("configuration.txt".equals(configPath)){
+                if("configuration.txt".equals(configPath) ||configPath==null|| configPath.isEmpty()){
                     readFromJar();
                 }else {
                     File configFile=new File(configPath);
@@ -96,7 +95,6 @@ public class CaptureProperties {
                             if(!blank&&pair.length==2){
                                 updateSettings(pair[0].trim(),pair[1].trim());
                             }
-
                         }
                     }
                 }
@@ -120,6 +118,7 @@ public class CaptureProperties {
             List<String> lines = reader1.lines().toList();
             for (String line : lines) {
                 if (line.contains("=")) {
+//                    ScreenCaptureToolApp.LOGGER.info("config line {}",line);
                     String[] pair = line.split("=");
                     updateSettings(pair[0].trim(), pair[1].trim());
                 }
@@ -153,6 +152,9 @@ public class CaptureProperties {
             case "undo" -> {
                 undo = Boolean.parseBoolean(value);
             }
+            case "paste" -> {
+                paste = Boolean.parseBoolean(value);
+            }
             case "redo" -> {
                 redo = Boolean.parseBoolean(value);
             }
@@ -161,6 +163,9 @@ public class CaptureProperties {
             }
             case "captureKey"->{
                 CAPTURE_KEY=Integer.parseInt(value);
+            }
+            case "uploadKey"->{
+                UPLOAD_KEY=Integer.parseInt(value);
             }
             case "autoCopy"->{
                 autoCopy= Boolean.parseBoolean(value);
@@ -176,6 +181,15 @@ public class CaptureProperties {
             }
             case "isCtrlNeeded"->{
                 isCtrlNeeded= Boolean.parseBoolean(value);
+            }
+            case "uploadIsShiftNeeded"->{
+                uploadIsShiftNeeded= Boolean.parseBoolean(value);
+            }
+            case "uploadIsAltNeeded"->{
+                uploadIsAltNeeded= Boolean.parseBoolean(value);
+            }
+            case "uploadIsCtrlNeeded"->{
+                uploadIsCtrlNeeded= Boolean.parseBoolean(value);
             }
             case "selectPath"->{
                 selectPath= value;
@@ -223,14 +237,51 @@ public class CaptureProperties {
         else
             return new File(f.getParent());
     }
+    public static File getLogPath() throws IOException {
+        File f=new File(logPath);
+        if(f.exists()) {
+            return checkAndCreateConfig(f);
+        }
+        else{
+            boolean b=false;
+            if(f.getParentFile().isDirectory()){
+                 b= f.createNewFile();
+                 return checkAndCreateConfig(f);
+            }
+            return b?f:null;
+        }
+    }
+
+    private static File checkAndCreateConfig(File f) throws IOException {
+        Path path;
+        for (String s : Objects.requireNonNull(f.getParentFile().list())) {
+            if(s.contains("log4j2.xml")){
+
+                path=Paths.get(s);
+                return path.toFile();
+            }
+        }
+        //prepare log4j2.xml file at that folder
+        InputStream in = ScreenCaptureToolApp.class.getResourceAsStream("log4j2.xml");
+        if(in!=null){
+            String s = new String(in.readAllBytes());
+            s= s.replace("logPath",logPath);
+            path=f.getParentFile().toPath().resolve("log4j2.xml");
+            Files.createFile(path);
+            Files.write(path,s.getBytes());
+            return path.toFile();
+        }
+        return null;
+    }
+
 
     public static void checkFile() throws IOException {
         File file=new File(System.getProperty("user.home")+"/captureToolConfig.txt");
         if(!file.exists()){
             file.createNewFile();
-            try(FileWriter writer=new FileWriter(file)){
-                writer.write("configuration.txt");
-            }
+//            try(FileWriter writer=new FileWriter(file)){
+//                writer.write("configuration.txt");
+//            }
         }
     }
     public static String toConfigString() {
@@ -238,6 +289,9 @@ public class CaptureProperties {
                 "\n isShiftNeeded=" + isShiftNeeded +
                 "\n isAltNeeded=" + isAltNeeded +
                 "\n isCtrlNeeded=" + isCtrlNeeded +
+                "\n uploadIsShiftNeeded=" + uploadIsShiftNeeded +
+                "\n uploadIsAltNeeded=" + uploadIsAltNeeded +
+                "\n uploadIsCtrlNeeded=" + uploadIsCtrlNeeded +
                 "\n captureType=" + captureType +
                 "\n enableAll=" + enableAll +
                 "\n export=" + export +
@@ -248,6 +302,7 @@ public class CaptureProperties {
                 "\n rubber=" + rubber +
                 "\n undo=" + undo +
                 "\n redo=" + redo +
+                "\n paste=" + paste +
                 "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
                 "\n autoCopy=" + autoCopy +
                 "\n autoSelect=" + autoSelect +
@@ -259,6 +314,7 @@ public class CaptureProperties {
                 "\n scaleOnMouse=" + scaleOnMouse +
                 "\n ocrFileInstalled=" + ocrFileInstalled +
                 "\n ocrDataPath=" + ocrPath +
+                "\n showSettings=" + showSettings +
                 "\n}";
     }
     public static void saveOnOriginalPath() {
@@ -285,8 +341,9 @@ public class CaptureProperties {
                 Task<Void> taskThread = new Task<>() {
                     @Override
                     protected Void call() throws IOException, NoSuchAlgorithmException, KeyManagementException {
-                        String path = HttpRequestHandler.downloadFile(url, new File(exePath).getParent()+"/tessdata.zip");
-                        FileHandler.unzip(path,new File(exePath).getParent());
+                        Path path = Paths.get(new File(exePath).getParent() , "tessdata.zip");
+                        HttpRequestHandler.downloadFile(url,path);
+                        FileHandler.unzip(path.toString(),new File(exePath).getParent());
                         Path path1=Path.of(new File(exePath).getParent(),"tessdata","temp-main");
                         Path path2=Path.of(new File(exePath).getParent(),"tessdata");
                         FileHandler.moveToAnotherDirectory(path1,path2);
@@ -308,8 +365,9 @@ public class CaptureProperties {
                     Task<Void> taskThread = new Task<>() {
                         @Override
                         protected Void call() throws IOException, NoSuchAlgorithmException, KeyManagementException {
-                            String path = HttpRequestHandler.downloadFile(url, file.getAbsolutePath()+"/tessdata.zip");
-                            FileHandler.unzip(path,file.getAbsolutePath()+"/tessdata");
+                            Path path = Paths.get(new File(exePath).getParent() , "tessdata.zip");
+                            HttpRequestHandler.downloadFile(url,path);
+                            FileHandler.unzip(path.toString(),file.getAbsolutePath()+"/tessdata");
                             Path path1= Path.of(file.getAbsolutePath(),"tessdata","temp-main");
                             Path path2=Path.of(file.getAbsolutePath(),"tessdata");
                             FileHandler.moveToAnotherDirectory(path1,path2);

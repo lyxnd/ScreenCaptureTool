@@ -32,5 +32,6 @@ public enum DrawTypes {
     RECT_DASHED,
     RECT_DASHED_FILLED,
     COMMON,
+    ERASER,
     CROP
 }
