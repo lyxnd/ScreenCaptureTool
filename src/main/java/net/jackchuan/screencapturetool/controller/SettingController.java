@@ -51,7 +51,7 @@ public class SettingController {
     @FXML
     private ToggleGroup toggleGroup1;
     @FXML
-    private TextField savePath, exePath, ocrDataPath;
+    private TextField savePath, exePath, ocrDataPath, captureSavePath;
     @FXML
     private Label state;
     @FXML
@@ -180,6 +180,7 @@ public class SettingController {
         exePath.setText(CaptureProperties.exePath);
         ocrDataPath.setText(CaptureProperties.ocrPath);
         logPath.setText(CaptureProperties.logPath);
+        captureSavePath.setText(CaptureProperties.captureSavePath);
     }
 
     @FXML
@@ -223,6 +224,9 @@ public class SettingController {
             }
             case "autoSelect" -> {
                 CaptureProperties.autoSelect = autoSelect.isSelected();
+            }
+            case "autoLaunch" -> {
+                CaptureProperties.autoLaunch = autoLaunch.isSelected();
             }
             case "isShiftNeeded" -> {
                 CaptureProperties.isShiftNeeded = isShiftNeeded.isSelected();
@@ -301,7 +305,7 @@ public class SettingController {
         chooser.setTitle("Save configurations as file");
         File file = chooser.showSaveDialog(parent);
         if (file != null) {
-            CaptureProperties.updateSelectPath(file.getAbsolutePath());
+            CaptureProperties.selectPath = file.getAbsolutePath();
             Platform.runLater(() -> {
                 savePath.setText(file.getAbsolutePath());
             });
@@ -365,12 +369,13 @@ public class SettingController {
                 "\n logPath=" + CaptureProperties.logPath +
                 "\n scaleOnMouse=" + CaptureProperties.scaleOnMouse +
                 "\n showSettings=" + CaptureProperties.showSettings +
+                "\n captureSavePath=" + captureSavePath.getText() +
                 "\n}";
     }
 
     public void saveOnOriginalPath() {
         if (autoLaunch.isSelected() && !CaptureProperties.autoLaunchEnabled) {
-            if (!CaptureProperties.exePath.isBlank() && !new File(CaptureProperties.exePath).isFile()) {
+            if (!CaptureProperties.exePath.isBlank() && new File(CaptureProperties.exePath).isFile()) {
                 CaptureProperties.autoLaunchEnabled = true;
                 shouldRegister = true;
             } else {
@@ -523,9 +528,26 @@ public class SettingController {
         chooser.setInitialDirectory(new File("D:/"));
         File file = chooser.showOpenDialog(null);
         if (file != null) {
-            exePath.setText(file.getAbsolutePath());
-            state.setText("EXE文件目录更改成功");
             CaptureProperties.exePath = file.getAbsolutePath();
+            exePath.setText(file.getAbsolutePath());
+            String exeParent = file.getParent();
+            CaptureProperties.logPath = exeParent + "/logs/CaptureTool.log";
+            logPath.setText(CaptureProperties.logPath);
+            CaptureProperties.captureSavePath = exeParent + "/captures";
+            captureSavePath.setText(CaptureProperties.captureSavePath);
+            state.setText("EXE文件目录更改成功，已自动配置日志目录与截图保存目录");
+        }
+    }
+
+    public void locateCaptureSavePath() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("选择截图保存目录");
+        chooser.setInitialDirectory(CaptureProperties.getSelectDirectory());
+        File file = chooser.showDialog(null);
+        if (file != null) {
+            CaptureProperties.captureSavePath = file.getAbsolutePath();
+            captureSavePath.setText(CaptureProperties.captureSavePath);
+            state.setText("截图保存目录更改成功");
         }
     }
 

@@ -7,15 +7,26 @@
      -fx-fit-height: 30px;
      -fx-scale-x: 1;
      -fx-scale-y: 1;
-     -fx-transition: scale 0.1s ease-in-out; /* 定义过渡效果 */
+     -fx-transition: scale 0.1s ease-in-out;
  }
 
 .icon-button :pressed .icon {
-    -fx-scale-x: 0.8; /* 按下时缩小 */
+    -fx-scale-x: 0.8;
     -fx-scale-y: 0.8;
 }
 .tool-bar {
     -fx-wrap-text: true;
-    -fx-width: 300; /* 设置最大宽度 */
+}
+
+.sidebar {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #888888;
+    -fx-padding: 4 0 1 0;
 }
 

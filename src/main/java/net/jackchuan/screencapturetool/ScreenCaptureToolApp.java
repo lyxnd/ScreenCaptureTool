@@ -31,6 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * 功能：
@@ -47,13 +50,19 @@ public class ScreenCaptureToolApp extends Application {
     public static Logger LOGGER;
     static {
         try {
+            // logs/ 目录固定在 EXE 同级目录（user.dir 由 EXE 启动器指向 EXE 所在目录）
+            Path logDir = Paths.get(System.getProperty("user.dir"), "logs");
+            Files.createDirectories(logDir);
+            System.setProperty("app.log.dir", logDir.toAbsolutePath().toString());
+
+            java.net.URL configUrl = ScreenCaptureToolApp.class.getResource("log4j2.xml");
+            if (configUrl != null) {
+                Configurator.initialize(null, configUrl.toString());
+            }
+
             CaptureProperties.checkFile();
             if (!CaptureProperties.loadProperties()) {
                 CaptureProperties.updateAll(CaptureProperties.enableAll);
-            }
-            File logPath = CaptureProperties.getLogPath();
-            if (logPath!=null) {
-                Configurator.initialize(null, logPath.toURI().toString());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -71,6 +80,8 @@ public class ScreenCaptureToolApp extends Application {
         // 隐藏主窗口
         Platform.setImplicitExit(false);
         LibraryLoader.loadOpenCVLibrary();
+//        CaptureProperties.captureType = ScreenCaptureUtil.benchmark();
+        LOGGER.info("benchmark selected capture method: {}", CaptureProperties.captureType);
         // 注册全局热键监听
         registerGlobalKeyListener();
         if(CaptureProperties.showSettings){
@@ -240,7 +251,8 @@ public class ScreenCaptureToolApp extends Application {
 //            overlayStage = new OverlayStage(SwingFXUtils.toFXImage(image,null));
             overlayStage = new OverlayStage();
         }
-
+        overlayStage.getIcons().add(new Image(ScreenCaptureToolApp
+                .class.getResource("assets/icon/editor.png").toExternalForm()));
         overlayStage.show();
     }
 

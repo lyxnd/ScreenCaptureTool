@@ -22,6 +22,47 @@ import java.util.List;
  */
 public class ImageDetector {
 
+    /**
+     * 返回图像中检测到的所有矩形区域坐标（原始尺寸坐标）。
+     * 每个元素为 int[]{x, y, width, height}。
+     */
+    public static List<int[]> detectRects(Image image) {
+        Mat originalImage = ImageFormatHandler.toMat(image);
+        double scaleFactor = 0.4;
+        Mat resizedImage = new Mat();
+        Imgproc.resize(originalImage, resizedImage,
+                new Size(originalImage.cols() * scaleFactor, originalImage.rows() * scaleFactor));
+        Mat grayImage = new Mat();
+        Imgproc.cvtColor(resizedImage, grayImage, Imgproc.COLOR_BGR2GRAY);
+        Mat edges = new Mat();
+        Imgproc.Canny(grayImage, edges, 50, 150);
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        List<int[]> rects = new ArrayList<>();
+        double invScale = 1.0 / scaleFactor;
+        for (MatOfPoint contour : contours) {
+            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+            double perimeter = Imgproc.arcLength(contour2f, true);
+            MatOfPoint2f approx2f = new MatOfPoint2f();
+            Imgproc.approxPolyDP(contour2f, approx2f, 0.02 * perimeter, true);
+            if (approx2f.total() == 4) {
+                MatOfPoint approx = new MatOfPoint(approx2f.toArray());
+                if (Imgproc.isContourConvex(approx)) {
+                    org.opencv.core.Rect br = Imgproc.boundingRect(approx);
+                    int x = (int) (br.x * invScale);
+                    int y = (int) (br.y * invScale);
+                    int w = (int) (br.width * invScale);
+                    int h = (int) (br.height * invScale);
+                    if (w > 50 && h > 50) {
+                        rects.add(new int[]{x, y, w, h});
+                    }
+                }
+            }
+        }
+        return rects;
+    }
+
     public static Image detectRect(Image image){
         Mat originalImage = ImageFormatHandler.toMat(image);
         Mat resizedImage = new Mat();

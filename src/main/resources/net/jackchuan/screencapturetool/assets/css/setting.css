@@ -1,32 +1,201 @@
-.childSet {
-    -fx-padding: 4 50;
+/* ── 全局 ─────────────────────────────────────── */
+.setting-root {
+    -fx-background-color: #F0F2F5;
+    -fx-font-size: 13px;
+}
+
+/* ── 顶部操作栏 ───────────────────────────────── */
+.top-bar {
+    -fx-background-color: #1E3A5F;
+    -fx-padding: 8 14;
+    -fx-spacing: 8;
     -fx-alignment: CENTER_LEFT;
 }
-.fatherSet{
+.top-bar-hint {
+    -fx-text-fill: #90CAF9;
+    -fx-font-size: 11px;
+}
+
+/* ── 卡片 ─────────────────────────────────────── */
+.card {
+    -fx-background-color: white;
+    -fx-border-color: #D8DCE3;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0, 0, 1);
+}
+.card-header {
+    -fx-background-color: #E8EEF6;
+    -fx-background-radius: 6 6 0 0;
+    -fx-padding: 8 14;
+    -fx-border-color: transparent transparent #D0D8E8 transparent;
+    -fx-spacing: 6;
     -fx-alignment: CENTER_LEFT;
+}
+.card-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1E3A5F;
+}
+.card-body {
+    -fx-padding: 12 14;
+    -fx-spacing: 8;
+}
+
+/* ── 路径行 ──────────────────────────────────── */
+.path-label {
+    -fx-text-fill: #555;
+    -fx-font-size: 12px;
+    -fx-min-width: 120px;
+    -fx-alignment: CENTER_RIGHT;
+}
+.path-field {
+    -fx-background-color: #F7F8FA;
+    -fx-border-color: #D8DCE3;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 4 8;
+    -fx-pref-height: 28px;
+}
+
+/* ── 按钮 ─────────────────────────────────────── */
+.btn-primary {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 5 14;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+.btn-primary:hover { -fx-background-color: #1565C0; }
+.btn-primary:pressed { -fx-background-color: #0D47A1; }
+
+.btn-secondary {
+    -fx-background-color: #E8EEF6;
+    -fx-text-fill: #1E3A5F;
+    -fx-background-radius: 4;
+    -fx-padding: 5 14;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+    -fx-border-color: #C5CDD8;
+    -fx-border-radius: 4;
+}
+.btn-secondary:hover { -fx-background-color: #D5E0EF; }
+
+.btn-danger {
+    -fx-background-color: #C62828;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 5 14;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+.btn-danger:hover { -fx-background-color: #B71C1C; }
+
+.btn-top {
+    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 5 12;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+    -fx-border-color: rgba(255,255,255,0.25);
+    -fx-border-radius: 4;
+}
+.btn-top:hover { -fx-background-color: rgba(255,255,255,0.22); }
+
+.btn-icon-top {
+    -fx-background-color: transparent;
+    -fx-padding: 4 8;
+    -fx-cursor: hand;
+}
+.btn-icon-top:hover { -fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 4; }
+
+/* ── 快捷键绑定按钮 ─────────────────────────── */
+.key-btn {
+    -fx-background-color: #F0F4FF;
+    -fx-text-fill: #1565C0;
+    -fx-border-color: #90B4E8;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 4 16;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-min-width: 80px;
+}
+.key-btn:hover { -fx-background-color: #DDEAFF; }
+
+/* ── RadioButton ─────────────────────────────── */
+.mod-radio {
+    -fx-padding: 0 10;
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+}
+
+/* ── CheckBox ────────────────────────────────── */
+.opt-check {
+    -fx-padding: 4 12 4 0;
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+}
+
+/* ── 快捷键开关列表 ──────────────────────────── */
+.shortcut-parent {
+    -fx-padding: 6 14;
+    -fx-background-color: #F0F4FF;
+    -fx-border-color: transparent transparent #DDE4F0 transparent;
+}
+.shortcut-child {
+    -fx-padding: 5 14 5 32;
+    -fx-border-color: transparent transparent #EEF1F7 transparent;
+}
+.shortcut-label {
+    -fx-text-fill: #333;
+    -fx-font-size: 12px;
+    -fx-min-width: 260px;
+}
+.shortcut-parent .check-box,
+.shortcut-child .check-box {
+    -fx-text-fill: #333333;
+}
+
+/* TitledPane title bar */
+.titled-pane-card > .title {
+    -fx-background-color: #E8EEF6;
+}
+/* TitledPane title text node */
+.titled-pane-card > .title > .text {
+    -fx-fill: #1E3A5F;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+.titled-pane-card > .content {
+    -fx-border-color: transparent;
     -fx-padding: 0;
 }
-/* 修改 ComboBox 的弹出框背景颜色 */
-.combo-box-popup .list-view {
-    -fx-background-color: #E0F7FA; /* 设置背景色，例如浅蓝色 */
+
+/* ── ComboBox ────────────────────────────────── */
+.setting-combo {
+    -fx-background-color: #F7F8FA;
+    -fx-border-color: #D8DCE3;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-pref-height: 28px;
+}
+.setting-combo .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333333;
 }
 
-/* 修改 ComboBox 的背景颜色 */
-.combo-box {
-    -fx-background-color: #B2EBF2; /* 设置背景色 */
+/* ── 状态栏 ──────────────────────────────────── */
+.status-bar {
+    -fx-background-color: #E8EEF6;
+    -fx-border-color: #D0D8E8 transparent transparent transparent;
+    -fx-padding: 5 14;
+    -fx-alignment: CENTER_LEFT;
 }
-.captureType{
-    -fx-padding: 0 30;
-}
-.custom-radio{
+.status-label {
+    -fx-text-fill: #1565C0;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 0 15;
-}
-.imp-check{
-    -fx-padding: 10 15;
-}
-
-.keys {
-    -fx-font-weight: bold;
-    -fx-padding: -260 0 0 0;
 }

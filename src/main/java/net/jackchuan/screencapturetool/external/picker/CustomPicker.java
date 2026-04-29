@@ -29,7 +29,7 @@ public abstract class CustomPicker extends Button {
     protected CaptureDisplayController controller;
     public CustomPicker(){
         this.focusedProperty().addListener((val,val1,val2) -> {
-            if(!val2){
+            if(!val2 && popup != null){
                 popup.hide();
             }
         });

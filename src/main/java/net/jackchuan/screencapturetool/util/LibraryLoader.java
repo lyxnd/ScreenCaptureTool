@@ -10,41 +10,50 @@ import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 public class LibraryLoader {
+    private static Path getNativeLibDir() throws IOException {
+        // 提取到程序工作目录下的 native-libs 子目录，避免使用 temp（会被杀毒/系统清理）
+        Path dir = Paths.get(System.getProperty("user.dir"), "native-libs");
+        Files.createDirectories(dir);
+        return dir;
+    }
+
+    private static Path extractLib(String resourceName, String fileName) throws IOException {
+        Path libDir = getNativeLibDir();
+        Path dest = libDir.resolve(fileName);
+        // 只在文件不存在时才解压，避免重复 IO
+        if (!Files.exists(dest)) {
+            try (var in = ScreenCaptureToolApp.class.getResourceAsStream(resourceName)) {
+                if (in == null) throw new IOException("Resource not found: " + resourceName);
+                Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        return dest;
+    }
+
     public static void loadOpenCVLibrary() {
         try {
-            // 将资源复制到临时目录
-            File tempLib = File.createTempFile("opencv_java490", ".dll");
-            tempLib.deleteOnExit(); // 程序退出时删除临时文件
-            // 从资源路径读取 DLL 文件并写入临时文件
-            Files.copy(ScreenCaptureToolApp.class.getResourceAsStream("lib/opencv_java490.dll"),
-                    tempLib.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            // 使用临时文件的路径加载 DLL
-            System.load(tempLib.getAbsolutePath());
+            Path dll = extractLib("lib/opencv_java490.dll", "opencv_java490.dll");
+            System.load(dll.toAbsolutePath().toString());
             System.out.println("OpenCV library loaded successfully.");
-
         } catch (IOException e) {
             e.printStackTrace();
             throw new UnsatisfiedLinkError("Failed to load OpenCV library.");
         }
     }
+
     public static void loadTess4jLibrary() {
         try {
-            System.setProperty("jna.library.path",
-                    "32".equals(System.getProperty("sun.arch.data.model")) ? "lib/win32-x86" : "lib/win32-x86-64");
-            File tempLib1 = File.createTempFile("libtesseract541", ".dll");
-            tempLib1.deleteOnExit(); // 程序退出时删除临时文件
-            // 从资源路径读取 DLL 文件并写入临时文件
-            Files.copy(ScreenCaptureToolApp.class.getResourceAsStream("lib/libtesseract541.dll"),
-                    tempLib1.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            // 使用临时文件的路径加载 DLL
-
-            System.out.println(tempLib1.exists());
-            System.load(tempLib1.getAbsolutePath());
+            Path libDir = getNativeLibDir();
+            // JNA 使用绝对路径查找依赖库
+            System.setProperty("jna.library.path", libDir.toAbsolutePath().toString());
+            Path dll = extractLib("lib/libtesseract541.dll", "libtesseract541.dll");
+            System.load(dll.toAbsolutePath().toString());
             System.out.println("Tess4j library loaded successfully.");
-
         } catch (IOException e) {
             e.printStackTrace();
             throw new UnsatisfiedLinkError("Failed to load Tess4j library.");
@@ -53,19 +62,12 @@ public class LibraryLoader {
 
     public static void loadJNativeHook() {
         try {
-            // 将资源复制到临时目录
-            File tempLib = File.createTempFile("JNativeHook", ".dll");
-            tempLib.deleteOnExit(); // 程序退出时删除临时文件
-            // 从资源路径读取 DLL 文件并写入临时文件
-            Files.copy(ScreenCaptureToolApp.class.getResourceAsStream("lib/JNativeHook.dll"),
-                    tempLib.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            // 使用临时文件的路径加载 DLL
-            System.load(tempLib.getAbsolutePath());
+            Path dll = extractLib("lib/JNativeHook.dll", "JNativeHook.dll");
+            System.load(dll.toAbsolutePath().toString());
             System.out.println("JNativeHook library loaded successfully.");
-
         } catch (IOException e) {
             e.printStackTrace();
-            throw new UnsatisfiedLinkError("Failed to load OpenCV library.");
+            throw new UnsatisfiedLinkError("Failed to load JNativeHook library.");
         }
     }
 }

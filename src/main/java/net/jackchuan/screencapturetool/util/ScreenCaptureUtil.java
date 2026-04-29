@@ -219,4 +219,39 @@ public class ScreenCaptureUtil {
     public static boolean shouldScale(javafx.scene.image.Image croppedFxImage) {
         return croppedFxImage.getWidth()>SIZE.getKey()-150||croppedFxImage.getHeight()>SIZE.getValue()-150;
     }
+
+    /**
+     * 对三种可靠截图方式各测一次，返回最快的 captureType 名称。
+     * Python 方式因需启动子进程必然最慢，直接跳过。
+     * 调用方必须在 JavaFX Application Thread 上调用（captureWithFX 的要求）。
+     */
+    public static String benchmark() {
+        Pair<Integer, Integer> screen = getScreenSize(DEFAULT_SIZE);
+        int w = screen.getKey(), h = screen.getValue();
+        String fastest = "java awt Robot";
+        long bestTime = Long.MAX_VALUE;
+
+        try {
+            long t = System.currentTimeMillis();
+            captureWithAWT(0, 0, w, h);
+            long elapsed = System.currentTimeMillis() - t;
+            if (elapsed < bestTime) { bestTime = elapsed; fastest = "java awt Robot"; }
+        } catch (Exception ignored) {}
+
+        try {
+            long t = System.currentTimeMillis();
+            captureWithJNA(0, 0, w, h);
+            long elapsed = System.currentTimeMillis() - t;
+            if (elapsed < bestTime) { bestTime = elapsed; fastest = "JNA"; }
+        } catch (Exception ignored) {}
+
+        try {
+            long t = System.currentTimeMillis();
+            captureWithFX(0, 0, w, h);
+            long elapsed = System.currentTimeMillis() - t;
+            if (elapsed < bestTime) { bestTime = elapsed; fastest = "javafx Robot"; }
+        } catch (Exception ignored) {}
+
+        return fastest;
+    }
 }

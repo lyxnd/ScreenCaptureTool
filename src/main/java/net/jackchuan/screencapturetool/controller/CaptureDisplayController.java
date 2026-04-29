@@ -27,6 +27,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Transform;
@@ -62,6 +63,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -93,6 +96,8 @@ public class CaptureDisplayController {
     private Canvas canvas, editArea, animator;
     @FXML
     private ToolBar tools;
+    @FXML
+    private VBox sideBar;
     @FXML
     private Button upload, createEmpty, save, copy, undo, redo, tailor, reset, clear, drag, pencil, rubber, addImage, addText, process, setting, exit;
     @FXML
@@ -148,6 +153,10 @@ public class CaptureDisplayController {
         stackPane.getChildren().remove(canvas);
         canvasGroup = new Group(canvas, editArea, animator);
         stackPane.getChildren().add(canvasGroup);
+        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+        clip.widthProperty().bind(stackPane.widthProperty());
+        clip.heightProperty().bind(stackPane.heightProperty());
+        stackPane.setClip(clip);
         canvas.setVisible(true);
         editArea.setVisible(true);
         animator.setVisible(true);
@@ -214,6 +223,7 @@ public class CaptureDisplayController {
             ControllerInstance.getInstance().setController(this);
             resizeStage();
         });
+
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.seconds(1), e -> {
                 })
@@ -833,20 +843,21 @@ public class CaptureDisplayController {
     }
 
     public void doOCR(BufferedImage image) {
+        ScreenCaptureToolApp.LOGGER.info("OCR 开始，tessdata路径={}", CaptureProperties.ocrPath);
         CompletableFuture.supplyAsync(() -> {
             Tesseract localTess = new Tesseract();
-            //TODO 设置语言识别选项，可以自行设置模型
             localTess.setLanguage("chi_sim+eng");
             localTess.setDatapath(CaptureProperties.ocrPath);
             try {
-                return localTess.doOCR(image);
+                String result = localTess.doOCR(image);
+                ScreenCaptureToolApp.LOGGER.info("OCR 识别成功，结果={}", result);
+                return result;
             } catch (TesseractException e) {
-                ScreenCaptureToolApp.LOGGER.error("ocr failed ,due to : ",e);
+                ScreenCaptureToolApp.LOGGER.error("OCR 识别失败", e);
                 return "OCR Error: " + e.getMessage();
             }
         }, executor).thenAccept(res -> {
             Platform.runLater(() -> {
-                ScreenCaptureToolApp.LOGGER.info("ocr result = " + res);
                 if (textStage != null) {
                     textStage.setText(res);
                     if (!textStage.isShowing()) {
@@ -858,33 +869,42 @@ public class CaptureDisplayController {
                 }
             });
         }).exceptionally(e -> {
-            ScreenCaptureToolApp.LOGGER.error("ocr failed ,due to : ",e);
-            e.printStackTrace(); // 打印异常信息
+            ScreenCaptureToolApp.LOGGER.error("OCR 任务异常", e);
             return null;
         });
     }
 
     private void initToolManager() {
         tools.getItems().clear();
-        toolbarManager.addAll(upload, createEmpty, save, copy, undo, redo, reset, clear, ocr, tailor, drag, pencil, rubber);
-        toolbarManager.addAll(line, rect, arrow, oval);
-        toolbarManager.addAll(colorPicker, strokeSlider, addImage, addText, processType, process, setting, exit);
+        toolbarManager.addAll(upload, createEmpty, save, copy, undo, redo, reset, clear);
+        toolbarManager.addAll(colorPicker, strokeSlider, processType, process, setting, exit);
         toolbarManager.addToToolBar();
     }
 
     private void initPickers() throws IOException {
-        arrow = new ArrowPicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/arrow.png").toExternalForm()),
+        ArrowPicker newArrow = new ArrowPicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/arrow.png").toExternalForm()),
                 ResourceLoader.getAsLines("picker/arrow.txt"), this);
-        rect = new RectanglePicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/rect.png").toExternalForm()),
+        RectanglePicker newRect = new RectanglePicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/rect.png").toExternalForm()),
                 ResourceLoader.getAsLines("picker/rect.txt"), this);
-        oval = new OvalPicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/oval.png").toExternalForm()),
+        OvalPicker newOval = new OvalPicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/oval.png").toExternalForm()),
                 ResourceLoader.getAsLines("picker/oval.txt"), this);
-        line = new LinePicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/line.png").toExternalForm()),
+        LinePicker newLine = new LinePicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/line.png").toExternalForm()),
                 ResourceLoader.getAsLines("picker/line.txt"), this);
-        ocr = new OCRPicker(new Image(ScreenCaptureToolApp.class.
-                getResource("assets/icon/ocr.png").toExternalForm()),
+        OCRPicker newOcr = new OCRPicker(new Image(ScreenCaptureToolApp.class.getResource("assets/icon/ocr.png").toExternalForm()),
                 ResourceLoader.getAsLines("picker/ocr.txt"), this);
+        replaceSidebarNode(arrow, newArrow);   arrow = newArrow;
+        replaceSidebarNode(rect, newRect);     rect = newRect;
+        replaceSidebarNode(oval, newOval);     oval = newOval;
+        replaceSidebarNode(line, newLine);     line = newLine;
+        replaceSidebarNode(ocr, newOcr);       ocr = newOcr;
         initToolManager();
+    }
+
+    private void replaceSidebarNode(javafx.scene.Node oldNode, javafx.scene.Node newNode) {
+        int index = sideBar.getChildren().indexOf(oldNode);
+        if (index >= 0) {
+            sideBar.getChildren().set(index, newNode);
+        }
     }
 
     public void addExternalText(DrawableText text) {
@@ -1201,32 +1221,43 @@ public class CaptureDisplayController {
 
     @FXML
     public void saveCapture() {
-        // 处理保存截图逻辑
         canvasGroup.setScaleX(1);
         canvasGroup.setScaleY(1);
         SnapshotParameters parameters = new SnapshotParameters();
-        parameters.setTransform(Transform.scale(ScreenCaptureUtil.SCALE,ScreenCaptureUtil.SCALE));  // 扩大图像
+        parameters.setTransform(Transform.scale(ScreenCaptureUtil.SCALE, ScreenCaptureUtil.SCALE));
         repaintCanvas(canvas.getGraphicsContext2D(), true, true, false);
-        WritableImage writableImage = new WritableImage((int) (canvas.getWidth()*ScreenCaptureUtil.SCALE),
-                (int) (canvas.getHeight()*ScreenCaptureUtil.SCALE));
+        WritableImage writableImage = new WritableImage((int) (canvas.getWidth() * ScreenCaptureUtil.SCALE),
+                (int) (canvas.getHeight() * ScreenCaptureUtil.SCALE));
         canvas.snapshot(parameters, writableImage);
-        // 转换为 BufferedImage
         BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
-        // 保存为文件
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Image");
-        fileChooser.setInitialFileName("capture.png");
-        fileChooser.setInitialDirectory(CaptureProperties.getSelectDirectory());
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files", "*.png"));
-        File file = fileChooser.showSaveDialog(null);
-        if (file != null) {
+
+        if (!CaptureProperties.captureSavePath.isBlank()) {
+            File dir = new File(CaptureProperties.captureSavePath);
+            dir.mkdirs();
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
+            File file = new File(dir, "capture_" + timestamp + ".png");
             try {
                 boolean flag = ImageIO.write(bufferedImage, "png", file);
                 AlertHelper.showAutoClosedPopup(flag ? "保存成功！" : "保存失败！！！", 1, parent.getX() + 100, parent.getY() + parent.getHeight() + 20);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            CaptureProperties.updateSelectPath(file.getParent());
+        } else {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Save Image");
+            fileChooser.setInitialFileName("capture.png");
+            fileChooser.setInitialDirectory(CaptureProperties.getSelectDirectory());
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files", "*.png"));
+            File file = fileChooser.showSaveDialog(null);
+            if (file != null) {
+                try {
+                    boolean flag = ImageIO.write(bufferedImage, "png", file);
+                    AlertHelper.showAutoClosedPopup(flag ? "保存成功！" : "保存失败！！！", 1, parent.getX() + 100, parent.getY() + parent.getHeight() + 20);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                CaptureProperties.updateSelectPath(file.getParent());
+            }
         }
         drawImageToCanvas(originalImage);
         state.setText("图片已保存");
@@ -1392,7 +1423,11 @@ public class CaptureDisplayController {
 
     private void resizeStage() {
         if (parent != null) {
-            parent.setWidth(capture.getFitWidth() + 30);
+            tools.applyCss();
+            tools.layout();
+            double toolbarW = tools.prefWidth(-1);
+            double sidebarW = sideBar != null ? sideBar.getPrefWidth() : 0;
+            parent.setWidth(Math.max(capture.getFitWidth() + sidebarW + 30, toolbarW + 20));
             parent.setHeight(capture.getFitHeight() + 100);
             canvas.setWidth(capture.getFitWidth());
             canvas.setHeight(capture.getFitHeight());
@@ -1581,15 +1616,16 @@ public class CaptureDisplayController {
     }
 
     public void test1() throws IOException {
-        ScreenCaptureToolApp.LOGGER.info("===========  全部编辑记录 ===========");
-        for (DrawRecords r : allRecordStack) {
-            ScreenCaptureToolApp.LOGGER.info(r.toString());
-        }
-        ScreenCaptureToolApp.LOGGER.info("-------  undo 记录 ---------");
-        for (DrawRecords r : undoStack) {
-            ScreenCaptureToolApp.LOGGER.info(r.toString());
-        }
-        ScreenCaptureToolApp.LOGGER.info("==========================");
+//        ScreenCaptureToolApp.LOGGER.info("===========  全部编辑记录 ===========");
+//        for (DrawRecords r : allRecordStack) {
+//            ScreenCaptureToolApp.LOGGER.info(r.toString());
+//        }
+//        ScreenCaptureToolApp.LOGGER.info("-------  undo 记录 ---------");
+//        for (DrawRecords r : undoStack) {
+//            ScreenCaptureToolApp.LOGGER.info(r.toString());
+//        }
+//        ScreenCaptureToolApp.LOGGER.info("==========================");
+        ScreenCaptureToolApp.LOGGER.info("stage width {}",parent.getWidth());
     }
 
     private GraphicsContext clearCanvas(Canvas canvas) {
@@ -1715,6 +1751,9 @@ public class CaptureDisplayController {
     }
 
     public void initialExecutor() {
+        if (this.executor != null && !this.executor.isShutdown()) {
+            this.executor.shutdown();
+        }
         this.executor = Executors.newFixedThreadPool(4);
     }
 

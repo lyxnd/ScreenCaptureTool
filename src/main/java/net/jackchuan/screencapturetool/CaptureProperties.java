@@ -34,7 +34,7 @@ public class CaptureProperties {
     public static boolean rubber;
     public static boolean undo;
     public static boolean redo;
-    public static String captureType="Python's pillow";
+    public static String captureType="java awt Robot";
     public static int CAPTURE_KEY;
     public static int UPLOAD_KEY=59;
     public static boolean isShiftNeeded=false;
@@ -57,6 +57,7 @@ public class CaptureProperties {
     public static String ocrPath;
     public static boolean showSettings=true;
     public static boolean paste;
+    public static String captureSavePath="";
 
 
     public static void updateAll(boolean flag){
@@ -215,6 +216,12 @@ public class CaptureProperties {
             case "showSettings"->{
                 showSettings= Boolean.parseBoolean(value);
             }
+            case "scaleOnMouse"->{
+                scaleOnMouse= Boolean.parseBoolean(value);
+            }
+            case "captureSavePath"->{
+                captureSavePath= value;
+            }
         }
 
     }
@@ -315,6 +322,7 @@ public class CaptureProperties {
                 "\n ocrFileInstalled=" + ocrFileInstalled +
                 "\n ocrDataPath=" + ocrPath +
                 "\n showSettings=" + showSettings +
+                "\n captureSavePath=" + captureSavePath +
                 "\n}";
     }
     public static void saveOnOriginalPath() {
