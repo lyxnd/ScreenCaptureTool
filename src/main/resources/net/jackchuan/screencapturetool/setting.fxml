@@ -1,72 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.collections.FXCollections?>
+<?import java.lang.*?>
+<?import javafx.collections.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import java.lang.String?>
-<VBox fx:id="root" prefHeight="620.0" prefWidth="660.0"
-      stylesheets="@./assets/css/setting.css"
-      styleClass="setting-root"
-      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="net.jackchuan.screencapturetool.controller.SettingController">
+
+<VBox fx:id="root" prefHeight="620.0" prefWidth="660.0" styleClass="setting-root" stylesheets="@./assets/css/setting.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.jackchuan.screencapturetool.controller.SettingController">
 
     <!-- ── 顶部操作栏 ─────────────────────────────────── -->
-    <HBox styleClass="top-bar" spacing="8" alignment="CENTER_LEFT">
-        <Button text="打开配置文件" styleClass="btn-top" onAction="#openConfigFile"/>
-        <Button styleClass="btn-icon-top" onAction="#reloadConfig">
-            <graphic><ImageView fitHeight="18" fitWidth="18"><Image url="@../screencapturetool/assets/icon/reload.png"/></ImageView></graphic>
-            <tooltip><Tooltip text="重新从文件加载配置"/></tooltip>
+    <HBox alignment="CENTER_LEFT" spacing="8" styleClass="top-bar">
+        <Button onAction="#openConfigFile" styleClass="btn-top" text="打开配置文件" />
+        <Button onAction="#reloadConfig" styleClass="btn-icon-top">
+            <graphic><ImageView fitHeight="18" fitWidth="18"><Image url="@../screencapturetool/assets/icon/reload.png" /></ImageView></graphic>
+            <tooltip><Tooltip text="重新从文件加载配置" /></tooltip>
         </Button>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Label text="Shift + F8  打开设置" styleClass="top-bar-hint"/>
-        <Button styleClass="btn-icon-top" onAction="#exitProgram">
-            <graphic><ImageView fitHeight="18" fitWidth="18"><Image url="@../screencapturetool/assets/icon/close.png"/></ImageView></graphic>
-            <tooltip><Tooltip text="退出程序"/></tooltip>
+        <Region HBox.hgrow="ALWAYS" />
+        <Label styleClass="top-bar-hint" text="Shift + F8  打开设置" />
+        <Button onAction="#exitProgram" styleClass="btn-icon-top">
+            <graphic><ImageView fitHeight="18" fitWidth="18"><Image url="@../screencapturetool/assets/icon/close.png" /></ImageView></graphic>
+            <tooltip><Tooltip text="退出程序" /></tooltip>
         </Button>
     </HBox>
 
     <!-- ── 主内容区（可滚动）────────────────────────── -->
-    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS"
-                style="-fx-background: transparent; -fx-background-color: transparent;">
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background: transparent; -fx-background-color: transparent;" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS">
         <VBox spacing="12" style="-fx-padding: 14;">
 
             <!-- ── 卡片：保存与路径配置 ─────────────── -->
             <VBox styleClass="card">
                 <HBox styleClass="card-header">
-                    <Label text="路径配置" styleClass="card-title"/>
+                    <Label styleClass="card-title" text="路径配置" />
                 </HBox>
-                <VBox styleClass="card-body" spacing="6">
+                <VBox spacing="6" styleClass="card-body">
                     <!-- 保存操作 -->
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="配置文件：" styleClass="path-label"/>
-                        <TextField fx:id="savePath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS"/>
-                        <Button text="另存为" styleClass="btn-secondary" onAction="#saveAsFile"/>
-                        <Button text="保存到原路径" styleClass="btn-primary" onAction="#saveOnOriginalPath"/>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="配置文件：" />
+                        <TextField fx:id="savePath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS" />
+                        <Button onAction="#saveAsFile" styleClass="btn-secondary" text="另存为" />
+                        <Button onAction="#saveOnOriginalPath" styleClass="btn-primary" text="保存到原路径" />
                     </HBox>
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="EXE 目录：" styleClass="path-label"/>
-                        <TextField fx:id="exePath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS"/>
-                        <Button text="更改" styleClass="btn-secondary" onAction="#locateExePath"/>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="EXE 目录：" />
+                        <TextField fx:id="exePath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS" />
+                        <Button onAction="#locateExePath" styleClass="btn-secondary" text="更改" />
                     </HBox>
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="OCR 数据目录：" styleClass="path-label"/>
-                        <TextField fx:id="ocrDataPath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS"/>
-                        <Button text="更改" styleClass="btn-secondary" onAction="#locateOCRPath"/>
-                        <Button text="从 Zip 安装" styleClass="btn-secondary" onAction="#unzipFromLocal"/>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="OCR 数据目录：" />
+                        <TextField fx:id="ocrDataPath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS" />
+                        <Button onAction="#locateOCRPath" styleClass="btn-secondary" text="更改" />
+                        <Button onAction="#unzipFromLocal" styleClass="btn-secondary" text="从 Zip 安装" />
                     </HBox>
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="日志目录：" styleClass="path-label"/>
-                        <TextField fx:id="logPath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS"/>
-                        <Button text="更改" styleClass="btn-secondary" onAction="#changeLogPath"/>
-                        <Button text="删除日志" styleClass="btn-danger" onAction="#clearLogs"/>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="日志目录：" />
+                        <TextField fx:id="logPath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS" />
+                        <Button onAction="#changeLogPath" styleClass="btn-secondary" text="更改" />
+                        <Button onAction="#clearLogs" styleClass="btn-danger" text="删除日志" />
                     </HBox>
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="截图保存目录：" styleClass="path-label"/>
-                        <TextField fx:id="captureSavePath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS"/>
-                        <Button text="更改" styleClass="btn-secondary" onAction="#locateCaptureSavePath"/>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="截图保存目录：" />
+                        <TextField fx:id="captureSavePath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS" />
+                        <Button onAction="#locateCaptureSavePath" styleClass="btn-secondary" text="更改" />
                     </HBox>
                 </VBox>
             </VBox>
@@ -74,98 +69,127 @@
             <!-- ── 卡片：截图设置 ────────────────────── -->
             <VBox styleClass="card">
                 <HBox styleClass="card-header">
-                    <Label text="截图设置" styleClass="card-title"/>
+                    <Label styleClass="card-title" text="截图设置" />
                 </HBox>
-                <VBox styleClass="card-body" spacing="10">
+                <VBox spacing="10" styleClass="card-body">
                     <!-- 截图快捷键 -->
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="截图快捷键：" styleClass="path-label"/>
-                        <Button fx:id="changeKeyBind" styleClass="key-btn" onAction="#changeKeyBinding" prefHeight="28"/>
-                        <Label text="+" style="-fx-text-fill:#999;"/>
-                        <RadioButton fx:id="isShiftNeeded" styleClass="mod-radio" text="Shift" onAction="#changeKeyBinding">
-                            <toggleGroup><ToggleGroup fx:id="toggleGroup"/></toggleGroup>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="截图快捷键：" />
+                        <Button fx:id="changeKeyBind" onAction="#changeKeyBinding" prefHeight="28" styleClass="key-btn" />
+                        <Label style="-fx-text-fill:#999;" text="+" />
+                        <RadioButton fx:id="isShiftNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Shift">
+                            <toggleGroup><ToggleGroup fx:id="toggleGroup" /></toggleGroup>
                         </RadioButton>
-                        <RadioButton fx:id="isAltNeeded"   styleClass="mod-radio" text="Alt"   toggleGroup="$toggleGroup" onAction="#changeKeyBinding"/>
-                        <RadioButton fx:id="isCtrlNeeded"  styleClass="mod-radio" text="Ctrl"  toggleGroup="$toggleGroup" onAction="#changeKeyBinding"/>
+                        <RadioButton fx:id="isAltNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Alt" toggleGroup="$toggleGroup" />
+                        <RadioButton fx:id="isCtrlNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Ctrl" toggleGroup="$toggleGroup" />
                     </HBox>
                     <!-- 上传快捷键 -->
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="上传快捷键：" styleClass="path-label"/>
-                        <Button fx:id="changeUploadKeyBind" styleClass="key-btn" onAction="#changeUploadKeyBinding" prefHeight="28"/>
-                        <Label text="+" style="-fx-text-fill:#999;"/>
-                        <RadioButton fx:id="uploadIsShiftNeeded" styleClass="mod-radio" text="Shift" onAction="#changeKeyBinding">
-                            <toggleGroup><ToggleGroup fx:id="toggleGroup1"/></toggleGroup>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="上传快捷键：" />
+                        <Button fx:id="changeUploadKeyBind" onAction="#changeUploadKeyBinding" prefHeight="28" styleClass="key-btn" />
+                        <Label style="-fx-text-fill:#999;" text="+" />
+                        <RadioButton fx:id="uploadIsShiftNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Shift">
+                            <toggleGroup><ToggleGroup fx:id="toggleGroup1" /></toggleGroup>
                         </RadioButton>
-                        <RadioButton fx:id="uploadIsAltNeeded"  styleClass="mod-radio" text="Alt"  toggleGroup="$toggleGroup1" onAction="#changeKeyBinding"/>
-                        <RadioButton fx:id="uploadIsCtrlNeeded" styleClass="mod-radio" text="Ctrl" toggleGroup="$toggleGroup1" onAction="#changeKeyBinding"/>
+                        <RadioButton fx:id="uploadIsAltNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Alt" toggleGroup="$toggleGroup1" />
+                        <RadioButton fx:id="uploadIsCtrlNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Ctrl" toggleGroup="$toggleGroup1" />
                     </HBox>
-                    <!-- 截图方法 -->
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="截图方法：" styleClass="path-label"/>
-                        <ComboBox fx:id="captureType" styleClass="setting-combo" value="JNA" prefHeight="28">
+                    <!-- 识别模式 -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="识别模式：" />
+                        <ComboBox fx:id="detectMode" prefHeight="28" prefWidth="160" styleClass="setting-combo">
                             <items>
                                 <FXCollections fx:factory="observableArrayList">
-                                    <String fx:value="java awt Robot"/>
-                                    <String fx:value="javafx Robot"/>
-                                    <String fx:value="Python's pillow"/>
-                                    <String fx:value="JNA"/>
+                                    <String fx:value="窗口检测" />
+                                    <String fx:value="边缘检测" />
                                 </FXCollections>
                             </items>
                         </ComboBox>
                     </HBox>
+                    <!-- 截图方法 -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="截图方法：" />
+                        <ComboBox fx:id="captureType" prefHeight="28" styleClass="setting-combo" value="JNA">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="java awt Robot" />
+                                    <String fx:value="javafx Robot" />
+                                    <String fx:value="Python's pillow" />
+                                    <String fx:value="JNA" />
+                                </FXCollections>
+                            </items>
+                        </ComboBox>
+                    </HBox>
+               <HBox alignment="CENTER_LEFT" layoutX="24.0" layoutY="130.0" prefHeight="31.0" prefWidth="586.0" spacing="8">
+                  <children>
+                     <Label styleClass="path-label" text="读取剪切板:" />
+                     <RadioButton mnemonicParsing="false" prefHeight="18.0" prefWidth="101.0" styleClass="mod-radio" text="覆盖原图">
+                        <HBox.margin>
+                           <Insets left="10.0" />
+                        </HBox.margin>
+                        <toggleGroup>
+                           <ToggleGroup fx:id="readMode" />
+                        </toggleGroup>
+                     </RadioButton>
+                     <RadioButton layoutX="148.0" layoutY="16.0" mnemonicParsing="false" prefHeight="18.0" prefWidth="130.0" styleClass="mod-radio" text="作为图片插入" toggleGroup="$readMode">
+                        <HBox.margin>
+                           <Insets left="10.0" />
+                        </HBox.margin>
+                     </RadioButton>
+                  </children>
+               </HBox>
                     <!-- 行为选项 -->
-                    <HBox spacing="4" alignment="CENTER_LEFT" style="-fx-padding: 4 0 0 0;">
-                        <CheckBox fx:id="autoCopy"     styleClass="opt-check" text="截图后自动复制"/>
-                        <CheckBox fx:id="autoSelect"   styleClass="opt-check" text="自动识别截取区域"/>
-                        <CheckBox fx:id="autoLaunch"   styleClass="opt-check" text="开机自启动"/>
-                        <CheckBox fx:id="scaleOnMouse" styleClass="opt-check" text="鼠标处缩放"/>
-                        <CheckBox fx:id="popSetting"   styleClass="opt-check" text="启动时弹出设置"/>
+                    <HBox alignment="CENTER_LEFT" spacing="4" style="-fx-padding: 4 0 0 0;">
+                        <CheckBox fx:id="autoCopy" styleClass="opt-check" text="截图后自动复制" />
+                        <CheckBox fx:id="autoLaunch" styleClass="opt-check" text="开机自启动" />
+                        <CheckBox fx:id="scaleOnMouse" styleClass="opt-check" text="鼠标处缩放" />
+                        <CheckBox fx:id="popSetting" styleClass="opt-check" text="启动时弹出设置" />
                     </HBox>
                 </VBox>
             </VBox>
 
             <!-- ── 卡片：快捷键开关 ──────────────────── -->
-            <TitledPane fx:id="keys" styleClass="titled-pane-card" text="快捷键开关" animated="true">
+            <TitledPane fx:id="keys" animated="true" styleClass="titled-pane-card" text="快捷键开关">
                 <VBox fx:id="setBox">
-                    <HBox styleClass="shortcut-parent" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="启用全部快捷键" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="enableAll" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-parent">
+                        <Label styleClass="shortcut-label" text="启用全部快捷键" />
+                        <CheckBox fx:id="enableAll" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="保存 / 导出     Ctrl + S" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="export" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="保存 / 导出     Ctrl + S" />
+                        <CheckBox fx:id="export" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="复制到剪切板   Ctrl + C" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="copy" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="复制到剪切板   Ctrl + C" />
+                        <CheckBox fx:id="copy" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="撤销            Ctrl + Z" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="undo" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="撤销            Ctrl + Z" />
+                        <CheckBox fx:id="undo" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="重做            Ctrl + Y" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="redo" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="重做            Ctrl + Y" />
+                        <CheckBox fx:id="redo" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="重置所有操作   Ctrl + R" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="reset" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="重置所有操作   Ctrl + R" />
+                        <CheckBox fx:id="reset" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="粘贴图片        Ctrl + V" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="paste" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="粘贴图片        Ctrl + V" />
+                        <CheckBox fx:id="paste" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="清除历史记录   Shift + Delete" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="clearHistory" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="清除历史记录   Shift + Delete" />
+                        <CheckBox fx:id="clearHistory" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="拖动图片        Alt + 鼠标" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="drag" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="拖动图片        Alt + 鼠标" />
+                        <CheckBox fx:id="drag" onAction="#updateSettings" />
                     </HBox>
-                    <HBox styleClass="shortcut-child" alignment="CENTER_LEFT" spacing="12">
-                        <Label text="橡皮模式        Shift + 鼠标" styleClass="shortcut-label"/>
-                        <CheckBox fx:id="rubber" onAction="#updateSettings"/>
+                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="shortcut-child">
+                        <Label styleClass="shortcut-label" text="橡皮模式        Shift + 鼠标" />
+                        <CheckBox fx:id="rubber" onAction="#updateSettings" />
                     </HBox>
                 </VBox>
             </TitledPane>
@@ -175,6 +199,6 @@
 
     <!-- ── 状态栏 ─────────────────────────────────── -->
     <HBox styleClass="status-bar">
-        <Label fx:id="state" styleClass="status-label"/>
+        <Label fx:id="state" styleClass="status-label" />
     </HBox>
 </VBox>

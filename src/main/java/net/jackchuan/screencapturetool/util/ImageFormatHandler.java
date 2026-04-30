@@ -22,6 +22,22 @@ import java.nio.IntBuffer;
  */
 public class ImageFormatHandler {
 
+    public static WritableImage toWritableImage(Image image) {
+        WritableImage writableImage = new WritableImage(
+                (int) image.getWidth(),
+                (int) image.getHeight()
+        );
+        PixelReader reader = image.getPixelReader();
+        PixelWriter writer = writableImage.getPixelWriter();
+
+        for (int x = 0; x < image.getWidth(); x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                writer.setColor(x, y, reader.getColor(x, y));
+            }
+        }
+        return writableImage;
+    }
+
     public static WritableImage toFXImage(BufferedImage bImage) {
         int width = bImage.getWidth();
         int height = bImage.getHeight();

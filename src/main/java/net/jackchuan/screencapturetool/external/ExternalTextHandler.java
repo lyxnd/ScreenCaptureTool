@@ -41,12 +41,10 @@ public class ExternalTextHandler {
     }
 
     public void updateText(GraphicsContext gc, DrawableText text){
-//        if(text.shouldRenderBorder()){
-//            drawBorder(outerCanvas.getGraphicsContext2D(), text);
-//        }
-        gc.setFont(text.getFont());
-        gc.setStroke(text.getColor());
-        outerCanvas.getGraphicsContext2D().strokeText(text.getValue(),text.getX(),text.getY());
+        GraphicsContext outerGc = outerCanvas.getGraphicsContext2D();
+        outerGc.setFont(text.getFont());
+        outerGc.setStroke(text.getColor());
+        outerGc.strokeText(text.getValue(), text.getX(), text.getY());
     }
     public void init(DrawableText text) {
         GraphicsContext gc = editArea.getGraphicsContext2D();
@@ -58,7 +56,7 @@ public class ExternalTextHandler {
     private void drawBorder(GraphicsContext gc, DrawableText text) {
         gc.setStroke(Color.CYAN);
         gc.setLineWidth(3);
-        gc.strokeRect(text.x-10, text.y-20, text.width, text.height);
+        gc.strokeRect(text.x - 5, text.y - text.height + 4, text.width + 5, text.height + 4);
     }
 
     public CornerType isNearBorder(DrawableText text, double mouseX, double mouseY) {
@@ -248,15 +246,25 @@ public class ExternalTextHandler {
         }
 
         public boolean canKeep() {
-            return Math.abs(this.x-this.oriX)<5||Math.abs(this.y-this.oriY)<5;
+            return Math.abs(this.x-this.oriX)<5 && Math.abs(this.y-this.oriY)<5;
         }
 
         public Color getColor() {
             return color;
         }
 
+        public void setColor(Color color) {
+            this.color = color;
+        }
+
         public Font getFont() {
             return font;
+        }
+
+        public void setFont(Font font) {
+            this.font = font;
+            this.width = font.getSize() * value.length() + 20;
+            this.height = font.getSize() + 12;
         }
     }
 }

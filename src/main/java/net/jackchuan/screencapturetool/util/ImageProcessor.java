@@ -255,6 +255,87 @@ public class ImageProcessor {
         return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(restored), null);
     }
 
+    public static WritableImage sketch(Image image) {
+        Mat src = ImageFormatHandler.toMat(image);
+        Mat gray = new Mat();
+        Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
+        Mat inverted = new Mat();
+        Core.bitwise_not(gray, inverted);
+        Mat blurred = new Mat();
+        Imgproc.GaussianBlur(inverted, blurred, new Size(21, 21), 0);
+        // 颜色加深混合：sketch = gray / (255 - blurred) * 255，夹紧到 [0, 255]
+        Mat grayF = new Mat(), denomF = new Mat();
+        gray.convertTo(grayF, CvType.CV_32F);
+        blurred.convertTo(denomF, CvType.CV_32F, -1.0, 255.0);  // 255 - blurred
+        Core.max(denomF, new Scalar(1.0), denomF);
+        Mat sketchF = new Mat();
+        Core.divide(grayF, denomF, sketchF, 255.0);
+        Core.min(sketchF, new Scalar(255.0), sketchF);
+        Mat result = new Mat();
+        sketchF.convertTo(result, CvType.CV_8U);
+        Mat colorResult = new Mat();
+        Imgproc.cvtColor(result, colorResult, Imgproc.COLOR_GRAY2BGR);
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(colorResult), null);
+    }
+
+    public static WritableImage emboss(Image image) {
+        Mat src = ImageFormatHandler.toMat(image);
+        Mat kernel = new Mat(3, 3, CvType.CV_32F);
+        kernel.put(0, 0, new float[]{-2, -1, 0, -1, 1, 1, 0, 1, 2});
+        Mat result = new Mat();
+        Imgproc.filter2D(src, result, -1, kernel);
+        Core.add(result, new Scalar(128, 128, 128), result);
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(result), null);
+    }
+
+    public static WritableImage bilateralFilter(Image image) {
+        Mat src = ImageFormatHandler.toMat(image);
+        Mat result = new Mat();
+        Imgproc.bilateralFilter(src, result, 9, 75, 75);
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(result), null);
+    }
+
+    public static WritableImage clahe(Image image) {
+        Mat src = ImageFormatHandler.toMat(image);
+        Mat lab = new Mat();
+        Imgproc.cvtColor(src, lab, Imgproc.COLOR_BGR2Lab);
+        List<Mat> channels = new ArrayList<>();
+        Core.split(lab, channels);
+        org.opencv.imgproc.CLAHE claheObj = Imgproc.createCLAHE(2.0, new Size(8, 8));
+        claheObj.apply(channels.get(0), channels.get(0));
+        Core.merge(channels, lab);
+        Mat result = new Mat();
+        Imgproc.cvtColor(lab, result, Imgproc.COLOR_Lab2BGR);
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(result), null);
+    }
+
+    public static WritableImage dilate(Image image) {
+        Mat src = ImageFormatHandler.toMat(image);
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+        Mat result = new Mat();
+        Imgproc.dilate(src, result, kernel);
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(result), null);
+    }
+
+    public static WritableImage erode(Image image) {
+        Mat src = ImageFormatHandler.toMat(image);
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+        Mat result = new Mat();
+        Imgproc.erode(src, result, kernel);
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(result), null);
+    }
+
+    public static WritableImage otsuThreshold(Image image) {
+        Mat src = ImageFormatHandler.toMat(image);
+        Mat gray = new Mat();
+        Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
+        Mat result = new Mat();
+        Imgproc.threshold(gray, result, 0, 255, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
+        Mat colorResult = new Mat();
+        Imgproc.cvtColor(result, colorResult, Imgproc.COLOR_GRAY2BGR);
+        return SwingFXUtils.toFXImage(ImageFormatHandler.toBufferedImage(colorResult), null);
+    }
+
     // 创建高通滤波器
     private static Mat createHomomorphicFilter(Size size, double cutoff, double gammaL, double gammaH) {
         int rows = (int) size.height;

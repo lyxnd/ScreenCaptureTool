@@ -23,6 +23,7 @@ import net.jackchuan.screencapturetool.external.SelectorMenu;
 public class TextFieldPane extends Pane {
     private TextField textField;
     private CaptureDisplayController controller;
+    private ExternalTextHandler.DrawableText editingText = null;
     private ContextMenu fontSelector;
     private Menu font;
     private Menu size;
@@ -65,12 +66,26 @@ public class TextFieldPane extends Pane {
             textField.setFocusTraversable(false);
         });
         textField.setOnAction(e -> {
-            ExternalTextHandler.DrawableText text=new ExternalTextHandler.DrawableText(textField.getText(),
-                    textField.getLayoutX(),textField.getLayoutY()+textField.getHeight()+30,
-                    controller.getFont(),controller.getStrokeColor());
-            controller.getTextHandler().addExternalText(text);
-            controller.getTextHandler().drawAllTexts(controller.getGraphicsContext());
-            controller.addExternalText(text);
+            String newValue = textField.getText();
+            if (newValue == null || newValue.isBlank()) {
+                editingText = null;
+                removeTextField();
+                return;
+            }
+            Font newFont = textField.getFont();
+            if (editingText != null) {
+                controller.updateExistingText(editingText, newValue, newFont, controller.getStrokeColor());
+                editingText = null;
+            } else {
+                ExternalTextHandler.DrawableText text = new ExternalTextHandler.DrawableText(
+                        newValue,
+                        textField.getLayoutX(), textField.getLayoutY() + textField.getHeight() + 30,
+                        newFont, controller.getStrokeColor());
+                controller.getTextHandler().addExternalText(text);
+                controller.getTextHandler().drawAllTexts(controller.getGraphicsContext());
+                controller.addExternalText(text);
+            }
+            removeTextField();
         });
         textField.textProperty().addListener((obj,oldVal,newVal)->{
 //            drawText();
@@ -138,5 +153,18 @@ public class TextFieldPane extends Pane {
     public void setTextFieldPos(double x, double y) {
         textField.setLayoutX(x);
         textField.setLayoutY(y - controller.getToolBarHeight());
+    }
+
+    public void beginEdit(ExternalTextHandler.DrawableText text) {
+        editingText = text;
+        textField.setText(text.getValue());
+        textField.setFont(text.getFont());
+        textField.setLayoutX(text.getX());
+        textField.setLayoutY(text.getY() - text.getHeight() - controller.getToolBarHeight());
+        if (!this.getChildren().contains(textField)) {
+            this.getChildren().add(textField);
+        }
+        textField.requestFocus();
+        textField.selectAll();
     }
 }

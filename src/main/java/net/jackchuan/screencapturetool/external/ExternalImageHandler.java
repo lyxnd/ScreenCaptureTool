@@ -4,6 +4,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import lombok.Data;
 import net.jackchuan.screencapturetool.util.impl.CornerType;
 
 import java.util.ArrayList;
@@ -150,6 +151,10 @@ public class ExternalImageHandler {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
 
+        public void setImage(Image image) {
+            this.image = image;
+        }
+
         public double getOriY() {
             return oriY;
         }
@@ -241,7 +246,7 @@ public class ExternalImageHandler {
         }
 
         public boolean canKeep() {
-            return Math.abs(this.x-this.oriX)<5||Math.abs(this.y-this.oriY)<5;
+            return Math.abs(this.x-this.oriX)<5 && Math.abs(this.y-this.oriY)<5;
         }
     }
 

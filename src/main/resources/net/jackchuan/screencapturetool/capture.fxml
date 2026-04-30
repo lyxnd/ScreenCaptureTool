@@ -13,6 +13,7 @@
 <?import net.jackchuan.screencapturetool.external.picker.OvalPicker?>
 <?import net.jackchuan.screencapturetool.external.picker.LinePicker?>
 <?import net.jackchuan.screencapturetool.external.picker.OCRPicker?>
+<?import net.jackchuan.screencapturetool.external.picker.EmojyPicker?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml" fx:id="captureRoot"
             fx:controller="net.jackchuan.screencapturetool.controller.CaptureDisplayController"
@@ -64,19 +65,26 @@
             <ComboBox fx:id="processType" value="选择处理类型">
                 <items>
                     <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="灰化"/>
+                        <String fx:value="反转"/>
+                        <String fx:value="对比度增强"/>
+                        <String fx:value="直方图均衡化"/>
+                        <String fx:value="CLAHE均衡"/>
                         <String fx:value="拉普拉斯锐化"/>
+                        <String fx:value="边缘提取"/>
+                        <String fx:value="垂直/水平边缘提取"/>
                         <String fx:value="均值平滑"/>
                         <String fx:value="高斯平滑"/>
                         <String fx:value="中值平滑"/>
+                        <String fx:value="双边滤波"/>
+                        <String fx:value="素描"/>
+                        <String fx:value="浮雕"/>
+                        <String fx:value="膨胀"/>
+                        <String fx:value="腐蚀"/>
+                        <String fx:value="Otsu阈值"/>
                         <String fx:value="同态滤波"/>
-                        <String fx:value="垂直/水平边缘提取"/>
-                        <String fx:value="灰化"/>
-                        <String fx:value="反转"/>
-                        <String fx:value="边缘提取"/>
-                        <String fx:value="前景分割"/>
                         <String fx:value="区域生长分割"/>
-                        <String fx:value="对比度增强"/>
-                        <String fx:value="直方图均衡化"/>
+                        <String fx:value="前景分割"/>
                     </FXCollections>
                 </items>
             </ComboBox>
@@ -152,10 +160,10 @@
                     <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/addText.png"/></ImageView></graphic>
                     <tooltip><Tooltip text="add text" styleClass="custom-tooltip"/></tooltip>
                 </Button>
-                <OCRPicker styleClass="icon-button" fx:id="ocr">
-                    <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/ocr.png"/></ImageView></graphic>
-                    <tooltip><Tooltip text="Optical Character Recognition" styleClass="custom-tooltip"/></tooltip>
-                </OCRPicker>
+                <EmojyPicker styleClass="icon-button" fx:id="emojy">
+                    <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/emojy.png"/></ImageView></graphic>
+                    <tooltip><Tooltip text="Emojy Chooser" styleClass="custom-tooltip"/></tooltip>
+                </EmojyPicker>
             </VBox>
         </ScrollPane>
     </left>

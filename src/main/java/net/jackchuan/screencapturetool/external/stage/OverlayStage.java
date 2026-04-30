@@ -1,6 +1,7 @@
 package net.jackchuan.screencapturetool.external.stage;
 
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
@@ -35,10 +36,12 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.W32APIOptions;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -64,15 +67,13 @@ public class OverlayStage extends Stage {
     private double startX, startY, endX, endY;
     private double autoStartX, autoStartY, autoEndX, autoEndY;
     private boolean hasAutoRect = false;
-    private volatile int[] hoveredWindowRect = null; // screen coords [x, y, w, h]
+    private volatile int[] hoveredWindowRect = null;
+    private volatile List<int[]> cachedEdgeRects = null;
+    private volatile boolean detectingEdge = false;
     private long lastDetectTime = 0;
     private ContextMenu popMenu;
     private MenuItem fullCut, test, test1, captureWindow;
     private Pair<Integer, Integer> size;
-
-    public OverlayStage() {
-        init(null);
-    }
 
     public OverlayStage(Image image) {
         init(image);
@@ -92,18 +93,18 @@ public class OverlayStage extends Stage {
         stackPane.setBackground(Background.EMPTY);
         scene.setFill(null);
         canvas.setCursor(Cursor.CROSSHAIR);
-        if (image != null) {
-            gc.drawImage(image, 0, 0, size.getKey(), size.getValue());
-        } else {
-            gc.setFill(Color.rgb(0, 0, 0, 0.35));
-            gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        }
+        gc.setFill(Color.rgb(255, 255, 255, 0.1));
+        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
         captureWindow = new MenuItem("截取此窗口");
         popMenu.getItems().addAll(fullCut, captureWindow, test, test1);
         initialAction();
         this.setScene(scene);
-        this.setMaximized(true);
         this.initStyle(StageStyle.TRANSPARENT);
+        Rectangle2D screenBounds = Screen.getPrimary().getBounds();
+        this.setX(screenBounds.getMinX());
+        this.setY(screenBounds.getMinY());
+        this.setWidth(screenBounds.getWidth());
+        this.setHeight(screenBounds.getHeight());
         this.getIcons().add(new Image(ScreenCaptureToolApp
                 .class.getResource("assets/icon/shortcut.png").toExternalForm()));
         this.setAlwaysOnTop(true);
@@ -131,9 +132,7 @@ public class OverlayStage extends Stage {
             }
         });
         test1.setOnAction(e -> {
-            closeOverlayStage();
-            Image snapshot = captureAndShowScreenshot(0, 0, size.getKey(), size.getValue(), false);
-            ImageDetector.detectRect(snapshot);
+
         });
         captureWindow.setOnAction(e -> {
             if (hoveredWindowRect != null) {
@@ -155,11 +154,7 @@ public class OverlayStage extends Stage {
             startX = e.getX();
             startY = e.getY();
         });
-        canvas.setOnMouseMoved(e -> {
-            if (CaptureProperties.autoSelect) {
-                handleSelectArea(e.getX(), e.getY());
-            }
-        });
+        canvas.setOnMouseMoved(e -> handleSelectArea(e.getX(), e.getY()));
         canvas.setOnMouseDragged(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
                 endX = e.getX();
@@ -169,19 +164,21 @@ public class OverlayStage extends Stage {
         });
         canvas.setOnMouseReleased(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
-                if (CaptureProperties.autoSelect && hasAutoRect) {
-                    int[] r = hoveredWindowRect;
-                    closeOverlayStage();
-                    Image img = captureAndShowScreenshot(r[0], r[1], r[2], r[3], true);
-                    if (CaptureProperties.autoCopy && img != null) {
-                        Toolkit.getDefaultToolkit().getSystemClipboard()
-                                .setContents(new TransferableImage(img), null);
-                    }
-                } else if (!isDoubleClick()) {
+                if (!isDoubleClick()) {
+                    // 有效拖拽 → 手动选区截图
                     closeOverlayStage();
                     Image img = captureAndShowScreenshot(
                             (int) Math.min(startX, endX), (int) Math.min(startY, endY),
                             (int) Math.abs(endX - startX), (int) Math.abs(endY - startY), true);
+                    if (CaptureProperties.autoCopy && img != null) {
+                        Toolkit.getDefaultToolkit().getSystemClipboard()
+                                .setContents(new TransferableImage(img), null);
+                    }
+                } else if (hasAutoRect && hoveredWindowRect != null) {
+                    // 单击 → 截取高亮窗口
+                    int[] r = hoveredWindowRect;
+                    closeOverlayStage();
+                    Image img = captureAndShowScreenshot(r[0], r[1], r[2], r[3], true);
                     if (CaptureProperties.autoCopy && img != null) {
                         Toolkit.getDefaultToolkit().getSystemClipboard()
                                 .setContents(new TransferableImage(img), null);
@@ -191,43 +188,33 @@ public class OverlayStage extends Stage {
         });
     }
 
-    /**
-     * EnumWindows 调用放后台线程，避免阻塞 JavaFX 主线程。
-     * 每 80ms 最多触发一次检测，防止鼠标快速移动时堆积大量任务。
-     */
     private void handleSelectArea(double mx, double my) {
         long now = System.currentTimeMillis();
         if (now - lastDetectTime < 80) return;
         lastDetectTime = now;
+        if ("边缘检测".equals(CaptureProperties.detectMode)) {
+            handleEdgeDetection(mx, my);
+        } else {
+            handleWindowDetection(mx, my);
+        }
+    }
 
-        // localToScreen 必须在 JavaFX 线程调用，提前取好坐标
-        // Windows API 返回物理像素，JavaFX localToScreen 返回逻辑像素，需用 outputScale 转换
+    /** 窗口检测：查询鼠标下方的顶层非本进程窗口，在画布上高亮。*/
+    private void handleWindowDetection(double mx, double my) {
         double scale = Screen.getPrimary().getOutputScaleX();
         javafx.geometry.Point2D screenPt = canvas.localToScreen(mx, my);
-        javafx.geometry.Point2D origin = canvas.localToScreen(0, 0);
+        javafx.geometry.Point2D origin   = canvas.localToScreen(0, 0);
         if (screenPt == null) return;
-        int sx = (int) (screenPt.getX() * scale); // 转为物理像素传给 Windows API
+        int sx = (int) (screenPt.getX() * scale);
         int sy = (int) (screenPt.getY() * scale);
-        double ox = origin != null ? origin.getX() : 0; // 逻辑像素，用于画布坐标换算
+        double ox = origin != null ? origin.getX() : 0;
         double oy = origin != null ? origin.getY() : 0;
 
         CompletableFuture.supplyAsync(() -> detectWindowAt(sx, sy))
                 .thenAccept(winRect -> Platform.runLater(() -> {
                     double cw = canvas.getWidth(), ch = canvas.getHeight();
-                    // 每次绘制前都先恢复半透明背景，防止 clearRect 让覆盖层消失
-                    gc.clearRect(0, 0, cw, ch);
-                    if (image != null) {
-                        gc.drawImage(image, 0, 0, cw, ch);
-                    } else {
-                        gc.setFill(Color.rgb(0, 0, 0, 0.35));
-                        gc.fillRect(0, 0, cw, ch);
-                    }
-                    if (winRect == null) {
-                        hasAutoRect = false;
-                        hoveredWindowRect = null;
-                        return;
-                    }
-                    // 统一转为逻辑像素：画布绘制和 captureWithJNA 都用逻辑坐标
+                    restoreBackground(cw, ch);
+                    if (winRect == null) { hasAutoRect = false; hoveredWindowRect = null; return; }
                     int lx = (int) (winRect[0] / scale);
                     int ly = (int) (winRect[1] / scale);
                     int lw = (int) (winRect[2] / scale);
@@ -235,23 +222,98 @@ public class OverlayStage extends Stage {
                     hoveredWindowRect = new int[]{lx, ly, lw, lh};
                     autoStartX = lx - ox;
                     autoStartY = ly - oy;
-                    autoEndX = autoStartX + lw;
-                    autoEndY = autoStartY + lh;
+                    autoEndX   = autoStartX + lw;
+                    autoEndY   = autoStartY + lh;
                     hasAutoRect = true;
-                    // 在半透明背景上高亮检测到的窗口边框
-                    double rx = autoStartX, ry = autoStartY, rw = autoEndX - autoStartX, rh = autoEndY - autoStartY;
-                    gc.setStroke(Color.rgb(0, 220, 80));
-                    gc.setLineWidth(2);
-                    gc.strokeRect(rx, ry, rw, rh);
-                    gc.setFill(Color.rgb(0, 220, 80));
-                    double cx = rx + rw / 2, cy = ry + rh / 2;
-                    for (double[] dot : new double[][]{{rx, ry}, {rx, ry + rh}, {rx + rw, ry}, {rx + rw, ry + rh},
-                            {cx, ry}, {cx, ry + rh}, {rx, cy}, {rx + rw, cy}}) {
-                        gc.fillRect(dot[0] - 3, dot[1] - 3, 6, 6);
-                    }
-                    gc.setFont(javafx.scene.text.Font.font("楷体", 12));
-                    gc.strokeText((int) rw + " × " + (int) rh, rx + rw + 6, ry + rh + 14, 120);
+                    drawHighlightRect(autoStartX, autoStartY, lw, lh, Color.rgb(0, 220, 80));
                 }));
+    }
+
+    /** 边缘检测：首次调用时异步跑 OpenCV，之后用缓存结果；找鼠标位置处最小包含矩形并高亮。*/
+    private void handleEdgeDetection(double mx, double my) {
+        if (image == null) return;
+        double cw = canvas.getWidth(), ch = canvas.getHeight();
+        double scaleX = image.getWidth()  / cw;
+        double scaleY = image.getHeight() / ch;
+        if (cachedEdgeRects != null) {
+            applyEdgeHighlight(mx, my, cachedEdgeRects, scaleX, scaleY);
+            return;
+        }
+        if (detectingEdge) return;
+        detectingEdge = true;
+        Image imgSnap = this.image;
+        final double fmx = mx, fmy = my;
+        CompletableFuture.supplyAsync(() -> ImageDetector.detectRects(imgSnap))
+                .thenAccept(rects -> Platform.runLater(() -> {
+                    cachedEdgeRects = rects;
+                    detectingEdge = false;
+                    applyEdgeHighlight(fmx, fmy, rects, scaleX, scaleY);
+                }));
+    }
+
+    /** 绘制全部检测矩形（暗色轮廓）+ 高亮最相关的一个（鼠标在内则最小，否则最近）。*/
+    private void applyEdgeHighlight(double mx, double my, List<int[]> rects, double scaleX, double scaleY) {
+        double cw = canvas.getWidth(), ch = canvas.getHeight();
+        restoreBackground(cw, ch);
+        double imgX = mx * scaleX, imgY = my * scaleY;
+
+        // 先把所有矩形画出来作为参考（半透明蓝色细线）
+        gc.setStroke(Color.rgb(80, 160, 255, 0.55));
+        gc.setLineWidth(1);
+        for (int[] r : rects) {
+            gc.strokeRect(r[0] / scaleX, r[1] / scaleY, r[2] / scaleX, r[3] / scaleY);
+        }
+
+        // 第一优先：找鼠标在内的最小矩形
+        int[] best = null;
+        double bestArea = Double.MAX_VALUE;
+        for (int[] r : rects) {
+            if (imgX >= r[0] && imgX <= r[0] + r[2] && imgY >= r[1] && imgY <= r[1] + r[3]) {
+                double area = (double) r[2] * r[3];
+                if (area < bestArea) { bestArea = area; best = r; }
+            }
+        }
+        // 第二优先（回退）：找中心距离最近的矩形
+        if (best == null && !rects.isEmpty()) {
+            double minDist = Double.MAX_VALUE;
+            for (int[] r : rects) {
+                double cx = r[0] + r[2] / 2.0, cy = r[1] + r[3] / 2.0;
+                double dist = Math.hypot(imgX - cx, imgY - cy);
+                if (dist < minDist) { minDist = dist; best = r; }
+            }
+        }
+
+        if (best == null) { hasAutoRect = false; hoveredWindowRect = null; return; }
+        double rx = best[0] / scaleX, ry = best[1] / scaleY;
+        double rw = best[2] / scaleX, rh = best[3] / scaleY;
+        javafx.geometry.Point2D origin = canvas.localToScreen(0, 0);
+        double ox = origin != null ? origin.getX() : 0;
+        double oy = origin != null ? origin.getY() : 0;
+        hoveredWindowRect = new int[]{(int)(rx + ox), (int)(ry + oy), (int) rw, (int) rh};
+        autoStartX = rx; autoStartY = ry; autoEndX = rx + rw; autoEndY = ry + rh;
+        hasAutoRect = true;
+        drawHighlightRect(rx, ry, rw, rh, Color.rgb(0, 180, 255));
+    }
+
+    /** 恢复画布背景：如有预截图则先绘图，再叠半透明遮罩。*/
+    private void restoreBackground(double cw, double ch) {
+        gc.clearRect(0, 0, cw, ch);
+        gc.setFill(Color.rgb(255, 255, 255, 0.1));
+        gc.fillRect(0, 0, cw, ch);
+    }
+
+    /** 绘制带角点的高亮矩形及尺寸标注。*/
+    private void drawHighlightRect(double rx, double ry, double rw, double rh, Color color) {
+        gc.setStroke(color); gc.setLineWidth(2);
+        gc.strokeRect(rx, ry, rw, rh);
+        gc.setFill(color);
+        double cx = rx + rw / 2, cy = ry + rh / 2;
+        for (double[] dot : new double[][]{{rx, ry}, {rx, ry+rh}, {rx+rw, ry}, {rx+rw, ry+rh},
+                {cx, ry}, {cx, ry+rh}, {rx, cy}, {rx+rw, cy}}) {
+            gc.fillRect(dot[0]-3, dot[1]-3, 6, 6);
+        }
+        gc.setFont(javafx.scene.text.Font.font("楷体", 12));
+        gc.strokeText((int) rw + " × " + (int) rh, rx+rw+6, ry+rh+14, 120);
     }
 
     /**
@@ -351,14 +413,13 @@ public class OverlayStage extends Stage {
         controller.setCapture(image, false);
         controller.setOriginalImage(image);
         displayStage.setScene(scene);
-        displayStage.setOnShown(e -> {
-
+        displayStage.setOnShown(e -> Platform.runLater(()->{
             Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
             double x = bounds.getMinX() + (bounds.getWidth() - displayStage.getWidth()) / 2;
             double y = bounds.getMinY() + (bounds.getHeight() - displayStage.getHeight()) / 2;
             displayStage.setX(Math.max(bounds.getMinX(), x));
             displayStage.setY(Math.max(bounds.getMinY(), y));
-        });
+        }));
         displayStage.show();
     }
 
@@ -371,13 +432,7 @@ public class OverlayStage extends Stage {
     }
 
     private void drawRectAndDotInfo(GraphicsContext gc, double startX, double startY, double endX, double endY, double w, double h) {
-        gc.clearRect(0, 0, w, h);
-        if (image != null) {
-            gc.drawImage(image, 0, 0, w, h);
-        } else {
-            gc.setFill(Color.rgb(0, 0, 0, 0.35));
-            gc.fillRect(0, 0, w, h);
-        }
+        restoreBackground(w, h);
         gc.setStroke(Color.GREEN);
         gc.strokeRect(Math.min(startX, endX), Math.min(startY, endY),
                 Math.abs(endX - startX), Math.abs(endY - startY));

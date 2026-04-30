@@ -35,7 +35,7 @@ public class CaptureProperties {
     public static boolean undo;
     public static boolean redo;
     public static String captureType="java awt Robot";
-    public static int CAPTURE_KEY;
+    public static int CAPTURE_KEY=88;
     public static int UPLOAD_KEY=59;
     public static boolean isShiftNeeded=false;
     public static boolean isAltNeeded=false;
@@ -44,8 +44,8 @@ public class CaptureProperties {
     public static boolean uploadIsAltNeeded=false;
     public static boolean uploadIsCtrlNeeded=false;
     public static boolean autoCopy;
-    public static boolean autoSelect;
     public static boolean autoLaunch;
+    public static String detectMode = "窗口检测";
     public static boolean shouldLog=true;
     public static boolean autoLaunchEnabled;
     public static boolean scaleOnMouse=false;
@@ -171,8 +171,8 @@ public class CaptureProperties {
             case "autoCopy"->{
                 autoCopy= Boolean.parseBoolean(value);
             }
-            case "autoSelect"->{
-                autoSelect= Boolean.parseBoolean(value);
+            case "detectMode"->{
+                detectMode= value;
             }
             case "isShiftNeeded"->{
                 isShiftNeeded= Boolean.parseBoolean(value);
@@ -312,7 +312,7 @@ public class CaptureProperties {
                 "\n paste=" + paste +
                 "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
                 "\n autoCopy=" + autoCopy +
-                "\n autoSelect=" + autoSelect +
+                "\n detectMode=" + detectMode +
                 "\n selectPath=" + selectPath +
                 "\n autoLaunch=" + autoLaunch +
                 "\n exePath=" + exePath +

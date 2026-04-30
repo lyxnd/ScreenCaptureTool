@@ -5,6 +5,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import lombok.Data;
 import net.jackchuan.screencapturetool.external.ExternalImageHandler.DrawableImage;
 import net.jackchuan.screencapturetool.external.ExternalTextHandler.DrawableText;
@@ -33,6 +34,8 @@ public class DrawRecords {
     private String detailInfo;
     private DrawableImage drawableImage;
     private DrawableText drawableText;
+    private Font textFont;
+    private Color textColor;
     private long editTick;
     private boolean shouldRepaint;
     private String text;
@@ -53,6 +56,8 @@ public class DrawRecords {
         setWidth(text.getWidth());
         setHeight(text.getHeight());
         setText(text.getValue());
+        this.textFont = text.getFont();
+        this.textColor = text.getColor();
         setDetailInfo(detail);
         setEditTick(tick);
     }
@@ -216,27 +221,29 @@ public class DrawRecords {
     }
 
     private void updateExternalText(GraphicsContext gc, GraphicsContext animatorGc) {
-        if (!isShouldRepaint()) {
+        if (!isShouldRepaint() || "delete".equals(detailInfo)) {
             return;
         }
-        if(drawableText.shouldRenderBorder()){
+        Font drawFont = textFont != null ? textFont : drawableText.getFont();
+        Color drawColor = textColor != null ? textColor : drawableText.getColor();
+        if (drawableText.shouldRenderBorder()) {
             gc.setStroke(Color.CYAN);
             gc.setLineWidth(3);
-            gc.strokeRect(getStartX()-10, getStartY()-20, getWidth(), getHeight());
+            gc.strokeRect(getStartX() - 5, getStartY() - getHeight() + 4, getWidth() + 5, getHeight() + 4);
         }
-        if(isShouldRender()){
-            gc.setFont(drawableText.getFont());
-            gc.setStroke(drawableText.getColor());
+        if (isShouldRender()) {
+            gc.setFont(drawFont);
+            gc.setStroke(drawColor);
             gc.strokeText(getText(), getStartX(), getStartY());
-        }else {
-            animatorGc.setFont(drawableText.getFont());
-            animatorGc.setStroke(drawableText.getColor());
+        } else {
+            animatorGc.setFont(drawFont);
+            animatorGc.setStroke(drawColor);
             animatorGc.strokeText(getText(), getStartX(), getStartY());
         }
     }
 
     public void updateExternalImage(GraphicsContext gc, GraphicsContext animatorGc) {
-        if (!isShouldRepaint()) {
+        if (!isShouldRepaint() || "delete".equals(detailInfo)) {
             return;
         }
         if(drawableImage.shouldRenderBorder()){

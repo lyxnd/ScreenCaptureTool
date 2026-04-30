@@ -67,7 +67,9 @@ public class SettingController {
     @FXML
     private CheckBox drag, rubber;
     @FXML
-    private CheckBox autoCopy, autoSelect, autoLaunch;
+    private CheckBox autoCopy, autoLaunch;
+    @FXML
+    private ComboBox<String> detectMode;
     private Stage parent;
     public static boolean changing = false;
     private int changedKey = 0;
@@ -94,11 +96,11 @@ public class SettingController {
             scaleOnMouse.selectedProperty().addListener((obj, oldVal, newVal) -> {
                 CaptureProperties.scaleOnMouse = newVal;
             });
-            autoSelect.selectedProperty().addListener((obj, oldVal, newVal) -> {
-                CaptureProperties.autoSelect = newVal;
-            });
             popSetting.selectedProperty().addListener((obj, oldVal, newVal) -> {
                 CaptureProperties.showSettings = newVal;
+            });
+            detectMode.valueProperty().addListener((obj, oldVal, newVal) -> {
+                CaptureProperties.detectMode = newVal;
             });
             GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
                 @Override
@@ -172,7 +174,7 @@ public class SettingController {
         uploadIsCtrlNeeded.setSelected(CaptureProperties.uploadIsCtrlNeeded);
         autoLaunch.setSelected(CaptureProperties.autoLaunch);
         autoCopy.setSelected(CaptureProperties.autoCopy);
-        autoSelect.setSelected(CaptureProperties.autoSelect);
+        detectMode.setValue(CaptureProperties.detectMode);
         captureType.setValue(CaptureProperties.captureType);
         popSetting.setSelected(CaptureProperties.showSettings);
         savePath.setText(CaptureProperties.configPath);
@@ -221,9 +223,6 @@ public class SettingController {
             }
             case "autoCopy" -> {
                 CaptureProperties.autoCopy = autoCopy.isSelected();
-            }
-            case "autoSelect" -> {
-                CaptureProperties.autoSelect = autoSelect.isSelected();
             }
             case "autoLaunch" -> {
                 CaptureProperties.autoLaunch = autoLaunch.isSelected();
@@ -359,7 +358,7 @@ public class SettingController {
                 "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
                 "\n uploadKey=" + CaptureProperties.UPLOAD_KEY +
                 "\n autoCopy=" + autoCopy.isSelected() +
-                "\n autoSelect=" + autoSelect.isSelected() +
+                "\n detectMode=" + detectMode.getValue() +
                 "\n selectPath=" + CaptureProperties.selectPath +
                 "\n autoLaunch=" + autoLaunch.isSelected() +
                 "\n ocrFileInstalled=" + CaptureProperties.ocrFileInstalled +

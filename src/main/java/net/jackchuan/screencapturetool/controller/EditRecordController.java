@@ -26,38 +26,32 @@ public class EditRecordController {
     @FXML
     private void initialize() {
         Platform.runLater(() -> {
-            self= (Stage) records.getScene().getWindow();
-            records.setPrefWidth(self.getWidth());
-            records.setPrefHeight(self.getHeight());
+            self = (Stage) records.getScene().getWindow();
             records.getScene().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-                if (event.getCode()== KeyCode.TAB) {
-                    event.consume(); // 阻止默认的焦点切换行为
+                if (event.getCode() == KeyCode.TAB) {
+                    event.consume();
                 }
             });
-            records.getScene().setOnKeyReleased(e->{
-                if (e.getCode()== KeyCode.TAB) {
-                    if(self!=null){
-                        self.close();
-                    }
+            records.getScene().setOnKeyReleased(e -> {
+                if (e.getCode() == KeyCode.TAB && self != null) {
+                    self.close();
                 }
             });
-
             for (String str : recordsList) {
-                Button btn = createButton(str,self.getWidth());
+                Button btn = createButton(str, 0);
                 records.getChildren().add(btn);
             }
         });
     }
 
-    private Button createButton(String str,double width) {
-        Button btn = new Button(str);
-        btn.setPrefWidth(width);
-        btn.setPrefHeight(30);
+    private Button createButton(String str, double width) {
+        int index = records.getChildren().size();
+        Button btn = new Button(String.format("%02d  %s", index + 1, str));
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.getStyleClass().add(index % 2 == 0 ? "record-item" : "record-item-alt");
         btn.setOnAction(e -> {
-            String str1=e.getSource().toString().split("'")[1];
-            int a = str1.indexOf("(");
-            int index= Integer.parseInt(str1.substring(a+1,str1.length()-1));
-            ControllerInstance.getInstance().getController().jumpTo(index);
+            int i = records.getChildren().indexOf(e.getSource());
+            ControllerInstance.getInstance().getController().jumpTo(i);
         });
         return btn;
     }
@@ -68,9 +62,9 @@ public class EditRecordController {
     }
 
 
-    public void addRecord(String editType,double width) {
+    public void addRecord(String editType) {
         recordsList.add(editType);
-        Button btn = createButton(editType,width);
+        Button btn = createButton(editType, 0);
         records.getChildren().add(btn);
     }
 

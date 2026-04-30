@@ -152,7 +152,7 @@ public class ScreenCaptureToolApp extends Application {
                     if (e.getKeyCode() == NativeKeyEvent.VC_F8 && shiftPressed) {
                         Platform.runLater(ScreenCaptureToolApp::openConfigWindow);
                     }
-                    // 捕捉热键（F12）
+                    // 捕捉热键（F1）
                     if(e.getKeyCode()==CaptureProperties.UPLOAD_KEY && !SettingController.changing){
                         if(CaptureProperties.uploadIsShiftNeeded&&shiftPressed){
                             showing = true;
@@ -162,6 +162,8 @@ public class ScreenCaptureToolApp extends Application {
                             uploadImage();
                         }else if(CaptureProperties.uploadIsCtrlNeeded&&ctrlPressed){
                             showing = true;
+                            uploadImage();
+                        }else {
                             uploadImage();
                         }
                     }
@@ -238,19 +240,16 @@ public class ScreenCaptureToolApp extends Application {
     }
 
     private static void showOverlayStage() {
-        if(!CaptureProperties.autoSelect){
-            overlayStage = new OverlayStage();
-        }else {
+        BufferedImage image=null;
+        if ("边缘检测".equals(CaptureProperties.detectMode)){
             Pair<Integer, Integer> size = ScreenCaptureUtil.getScreenSize(ScreenCaptureUtil.DEFAULT_SIZE);
-            BufferedImage image=null;
             try {
                 image = ScreenCaptureUtil.captureWithAWT(0, 0, size.getKey(), size.getValue());
             } catch (AWTException e) {
                 throw new RuntimeException(e);
             }
-//            overlayStage = new OverlayStage(SwingFXUtils.toFXImage(image,null));
-            overlayStage = new OverlayStage();
         }
+        overlayStage = new OverlayStage(image == null ? null:ImageFormatHandler.toFXImage(image));
         overlayStage.getIcons().add(new Image(ScreenCaptureToolApp
                 .class.getResource("assets/icon/editor.png").toExternalForm()));
         overlayStage.show();
@@ -282,13 +281,13 @@ public class ScreenCaptureToolApp extends Application {
         controller.setCapture(image,ScreenCaptureUtil.shouldScale(image));
         controller.setOriginalImage(image);
         displayStage.setScene(scene);
-        displayStage.setOnShown(e -> {
+        displayStage.setOnShown(e -> Platform.runLater(() -> {
             Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-            double x = bounds.getMinX() + (bounds.getWidth() - image.getWidth()) / 2;
-            double y = bounds.getMinY() + (bounds.getHeight() - image.getHeight()) / 2;
+            double x = bounds.getMinX() + (bounds.getWidth() - displayStage.getWidth()) / 2;
+            double y = bounds.getMinY() + (bounds.getHeight() - displayStage.getHeight()) / 2;
             displayStage.setX(Math.max(bounds.getMinX(), x));
             displayStage.setY(Math.max(bounds.getMinY(), y));
-        });
+        }));
         displayStage.show();
     }
 

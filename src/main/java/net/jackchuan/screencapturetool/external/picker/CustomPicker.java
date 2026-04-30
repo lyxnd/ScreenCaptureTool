@@ -1,7 +1,9 @@
 package net.jackchuan.screencapturetool.external.picker;
+import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -10,6 +12,9 @@ import javafx.stage.Window;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 
+import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 
 /**
@@ -34,15 +39,6 @@ public abstract class CustomPicker extends Button {
             }
         });
     }
-    public CustomPicker(String text, ArrayList<String> imgPaths,GraphicsContext gc){
-        this.gc=gc;
-        initUI(text,imgPaths);
-        this.focusedProperty().addListener((val,val1,val2) -> {
-            if(!val2){
-                popup.hide();
-            }
-        });
-    }
     public CustomPicker(Image icon, ArrayList<String> imgPaths,CaptureDisplayController controller){
         this.controller=controller;
         initUI(icon,imgPaths);
@@ -56,23 +52,75 @@ public abstract class CustomPicker extends Button {
         this.gc=gc;
         initUI(icon,imgPaths);
         this.focusedProperty().addListener((val,val1,val2) -> {
-            if(!val2){
+            if(!val2&& popup != null){
                 popup.hide();
             }
         });
     }
 
-    public CustomPicker(Image icon, Image[] imgs,GraphicsContext gc){
-        this.gc=gc;
-        initUI(icon,imgs);
+    public CustomPicker(String folder,CaptureDisplayController controller) throws URISyntaxException {
+        this.controller=controller;
         this.focusedProperty().addListener((val,val1,val2) -> {
-            if(!val2){
+            if(!val2 && popup != null){
                 popup.hide();
             }
         });
+        initUI(folder);
     }
+
+    private File[] lazyFiles;
+    private int loadedCount = 0;
+    private boolean loading = false;
+    private static final int SCROLL_BATCH = 150;
+    private static final int SCROLL_COLS = 10;
+
+    private void initUI(String folder) throws URISyntaxException {
+        popup = new Popup();
+        popup.setAutoHide(true);
+        displayer = new GridPane();
+        viewList = new ArrayList<>();
+        URL resource = ScreenCaptureToolApp.class.getResource(folder);
+        if (resource != null) {
+            File dir = new File(resource.toURI());
+            lazyFiles = dir.listFiles();
+        }
+        ScrollPane scrollPane = new ScrollPane(displayer);
+        scrollPane.setPrefHeight(300);
+        scrollPane.setPrefWidth(380);
+        popup.setWidth(380);
+        scrollPane.vvalueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal.doubleValue() >= 0.85 && !loading
+                    && lazyFiles != null && loadedCount < lazyFiles.length) {
+                loadNextBatch(scrollPane);
+            }
+        });
+        popup.getContent().add(scrollPane);
+        this.setOnAction(e -> popup(this.getScene().getWindow()));
+    }
+
+    private void loadNextBatch(ScrollPane scrollPane) {
+        if (loading || lazyFiles == null || loadedCount >= lazyFiles.length) return;
+        loading = true;
+        int start = loadedCount;
+        int end = Math.min(start + SCROLL_BATCH, lazyFiles.length);
+        for (int i = start; i < end; i++) {
+            Button btn = new Button();
+            ImageView imageView = new ImageView(lazyFiles[i].toURI().toString());
+            imageView.setFitWidth(20);
+            imageView.setFitHeight(20);
+            btn.setGraphic(imageView);
+            int finalI = i;
+            btn.setOnAction(e -> { popup.hide(); onClicked(gc, finalI); });
+            displayer.add(btn, i % SCROLL_COLS, i / SCROLL_COLS);
+        }
+        loadedCount = end;
+        // 延迟重置，等布局完成后再允许下一次触发
+        Platform.runLater(() -> loading = false);
+    }
+
     public void initUI(){
         popup=new Popup();
+        popup.setAutoHide(true);
         displayer=new GridPane();
         popup.getContent().add(displayer);
         this.setOnAction(e -> popup(this.getScene().getWindow()));
@@ -80,6 +128,7 @@ public abstract class CustomPicker extends Button {
 
     private void initUI(Image icon, Image[] imgs) {
         popup=new Popup();
+        popup.setAutoHide(true);
         ImageView iconView =new ImageView(icon);
         iconView.setFitWidth(20);  // 设置图标的宽度
         iconView.setFitHeight(20); // 设置图标的高度
@@ -107,6 +156,7 @@ public abstract class CustomPicker extends Button {
     }
     private void initUI(Image icon, ArrayList<String> imgPaths) {
         popup=new Popup();
+        popup.setAutoHide(true);
         ImageView iconView =new ImageView(icon);
         iconView.setFitWidth(20);  // 设置图标的宽度
         iconView.setFitHeight(20); // 设置图标的高度
@@ -144,6 +194,7 @@ public abstract class CustomPicker extends Button {
 
     private void initUI(String text, ArrayList<String> imgPaths) {
         popup=new Popup();
+        popup.setAutoHide(true);
         this.setText(text);
         displayer=new GridPane();
         viewList=new ArrayList<>();
@@ -172,8 +223,12 @@ public abstract class CustomPicker extends Button {
         popup.getContent().add(displayer);
     }
     public void popup(Window window){
-        popup.show(window,this.localToScreen(this.getBoundsInLocal()).getMinX(),
-                this.localToScreen(this.getBoundsInLocal()).getMaxY());
+        if (lazyFiles != null && loadedCount == 0) {
+            ScrollPane sp = (ScrollPane) popup.getContent().get(0);
+            loadNextBatch(sp);
+        }
+        popup.show(window,this.localToScreen(this.getBoundsInLocal()).getMinX()+40,
+                this.localToScreen(this.getBoundsInLocal()).getMaxY()-40);
     }
     public Button getTrigger() {
         return this;
