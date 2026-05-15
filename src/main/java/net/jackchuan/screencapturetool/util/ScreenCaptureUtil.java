@@ -140,8 +140,8 @@ public class ScreenCaptureUtil {
             int b = buffer.getByte(i * 4) & 0xFF;
             int g = buffer.getByte(i * 4 + 1) & 0xFF;
             int r = buffer.getByte(i * 4 + 2) & 0xFF;
-            int a = buffer.getByte(i * 4 + 3) & 0xFF;
-            rgbArray[i] = (a << 24) | (r << 16) | (g << 8) | b;
+            // GDI BI_RGB 的 alpha 字节未定义（常为 0），屏幕截图永远不透明
+            rgbArray[i] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
         image.setRGB(0, 0, adjustedWidth, adjustedHeight, rgbArray, 0, adjustedWidth);
 

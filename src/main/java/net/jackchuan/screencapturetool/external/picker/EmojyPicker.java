@@ -7,12 +7,8 @@ import javafx.scene.image.ImageView;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 
-import java.io.File;
-import java.net.URI;
+import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 
 /**
@@ -32,21 +28,14 @@ public class EmojyPicker extends CustomPicker{
         this.setGraphic(imageView);
     }
     @Override
-    protected void onClicked(GraphicsContext gc,int index) {
-        if(controller==null){
-            return;
-        }
-        URL resource = ScreenCaptureToolApp.class.getResource("assets/emojy");
-        if (resource != null) {
-            File dir = null;
-            try {
-                dir = new File(resource.toURI());
-                File[] files = dir.listFiles();
-                if(files!=null && files.length>index){
-                    controller.addEmojy(files[index]);
-                }
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
+    protected void onClicked(GraphicsContext gc, int index) {
+        if (controller == null) return;
+        String resourcePath = getResourcePath(index);
+        if (resourcePath != null) {
+            InputStream stream = ScreenCaptureToolApp.class.getResourceAsStream(resourcePath);
+            if (stream != null) {
+                String fileName = resourcePath.substring(resourcePath.lastIndexOf('/') + 1);
+                controller.addEmojy(new Image(stream), fileName);
             }
         }
         controller.setCursorShape(Cursor.HAND);

@@ -7,6 +7,7 @@ import javafx.scene.image.*;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Transform;
+import net.jackchuan.screencapturetool.CaptureProperties;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -21,6 +22,27 @@ import java.nio.IntBuffer;
  * 日期：2024/11/21 21:05
  */
 public class ImageFormatHandler {
+
+    public static BufferedImage applyOutputSize(BufferedImage source) {
+        String mode = CaptureProperties.outputSizeMode;
+        if ("原图尺寸".equals(mode)) return source;
+        int targetW, targetH;
+        if ("自定义".equals(mode)) {
+            targetW = Math.max(1, CaptureProperties.outputCustomWidth);
+            targetH = Math.max(1, CaptureProperties.outputCustomHeight);
+        } else {
+            double pct = Double.parseDouble(mode.replace("%", "")) / 100.0;
+            targetW = Math.max(1, (int) (source.getWidth() * pct));
+            targetH = Math.max(1, (int) (source.getHeight() * pct));
+        }
+        BufferedImage scaled = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = scaled.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.drawImage(source, 0, 0, targetW, targetH, null);
+        g2.dispose();
+        return scaled;
+    }
 
     public static WritableImage toWritableImage(Image image) {
         WritableImage writableImage = new WritableImage(
@@ -138,6 +160,27 @@ public class ImageFormatHandler {
         pair.setW(w * scale);
         pair.setH(h * scale);
         return pair;
+    }
+
+    public static BufferedImage applyUploadSize(BufferedImage source) {
+        String mode = CaptureProperties.uploadSizeMode;
+        if ("原图尺寸".equals(mode)) return source;
+        int targetW, targetH;
+        if ("自定义".equals(mode)) {
+            targetW = Math.max(1, CaptureProperties.uploadCustomWidth);
+            targetH = Math.max(1, CaptureProperties.uploadCustomHeight);
+        } else {
+            double pct = Double.parseDouble(mode.replace("%", "")) / 100.0;
+            targetW = Math.max(1, (int) (source.getWidth() * pct));
+            targetH = Math.max(1, (int) (source.getHeight() * pct));
+        }
+        BufferedImage scaled = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = scaled.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.drawImage(source, 0, 0, targetW, targetH, null);
+        g2.dispose();
+        return scaled;
     }
 
 

@@ -4,6 +4,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import lombok.Data;
 import net.jackchuan.screencapturetool.util.impl.CornerType;
 
 import java.util.ArrayList;
@@ -27,10 +28,10 @@ public class ExternalTextHandler {
         for (DrawableText text : texts) {
             gc.setFont(text.getFont());
             gc.setStroke(text.getColor());
-            if(text.shouldRenderBorder()){
+            if(text.isRenderBorder()){
                 drawBorder(outerCanvas.getGraphicsContext2D(), text);
             }
-            if(text.shouldRender()){
+            if(text.isShouldRender()){
                 gc.strokeText(text.getValue(),text.getX(),text.getY());
             }else {
                 outerCanvas.getGraphicsContext2D().setFont(text.getFont());
@@ -131,7 +132,7 @@ public class ExternalTextHandler {
 
 
 
-
+    @Data
     public static class DrawableText{
         private String value;
         double x, y, width, height;
@@ -167,98 +168,8 @@ public class ExternalTextHandler {
                     '}';
         }
 
-        public double getOriY() {
-            return oriY;
-        }
-
-        public double getOriX() {
-            return oriX;
-        }
-
-        public void setOriY(double oriY) {
-            this.oriY = oriY;
-        }
-
-        public void setOriX(double oriX) {
-            this.oriX = oriX;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public void setValue(String value) {
-            this.value = value;
-        }
-
-        public void setY(double y) {
-            this.y = y;
-        }
-
-        public void setWidth(double width) {
-            this.width = width;
-        }
-
-        public void setHeight(double height) {
-            this.height = height;
-        }
-
-        public void setX(double x) {
-            this.x = x;
-        }
-
-        public void setUndo(boolean undo) {
-            isUndo = undo;
-        }
-
-        public boolean isUndo() {
-            return isUndo;
-        }
-        public double getHeight() {
-            return height;
-        }
-
-        public double getWidth() {
-            return width;
-        }
-
-        public double getX() {
-            return x;
-        }
-
-        public double getY() {
-            return y;
-        }
-
-        public boolean shouldRender() {
-            return shouldRender;
-        }
-        public void setShouldRender(boolean shouldRender) {
-            this.shouldRender = shouldRender;
-        }
-
-        public void setRenderBorder(boolean renderBorder) {
-            this.renderBorder = renderBorder;
-        }
-
-        public boolean shouldRenderBorder() {
-            return renderBorder;
-        }
-
         public boolean canKeep() {
             return Math.abs(this.x-this.oriX)<5 && Math.abs(this.y-this.oriY)<5;
-        }
-
-        public Color getColor() {
-            return color;
-        }
-
-        public void setColor(Color color) {
-            this.color = color;
-        }
-
-        public Font getFont() {
-            return font;
         }
 
         public void setFont(Font font) {

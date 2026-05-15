@@ -18,6 +18,10 @@
         </Button>
         <Region HBox.hgrow="ALWAYS" />
         <Label styleClass="top-bar-hint" text="Shift + F8  打开设置" />
+        <Button onAction="#restartProgram" styleClass="btn-icon-top">
+            <graphic><ImageView fitHeight="18" fitWidth="18"><Image url="@../screencapturetool/assets/icon/restart.png" /></ImageView></graphic>
+            <tooltip><Tooltip text="重新启动程序" /></tooltip>
+        </Button>
         <Button onAction="#exitProgram" styleClass="btn-icon-top">
             <graphic><ImageView fitHeight="18" fitWidth="18"><Image url="@../screencapturetool/assets/icon/close.png" /></ImageView></graphic>
             <tooltip><Tooltip text="退出程序" /></tooltip>
@@ -50,7 +54,7 @@
                         <Label styleClass="path-label" text="OCR 数据目录：" />
                         <TextField fx:id="ocrDataPath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS" />
                         <Button onAction="#locateOCRPath" styleClass="btn-secondary" text="更改" />
-                        <Button onAction="#unzipFromLocal" styleClass="btn-secondary" text="从 Zip 安装" />
+                        <Button onAction="#downloadOcrData" styleClass="btn-secondary" text="下载/更新" />
                     </HBox>
                     <HBox alignment="CENTER_LEFT" spacing="8">
                         <Label styleClass="path-label" text="日志目录：" />
@@ -62,6 +66,10 @@
                         <Label styleClass="path-label" text="截图保存目录：" />
                         <TextField fx:id="captureSavePath" editable="false" styleClass="path-field" HBox.hgrow="ALWAYS" />
                         <Button onAction="#locateCaptureSavePath" styleClass="btn-secondary" text="更改" />
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="下载代理：" />
+                        <TextField fx:id="proxyUrl" promptText="留空使用系统代理，如 http://127.0.0.1:7890 或 socks://127.0.0.1:7890" styleClass="path-field" HBox.hgrow="ALWAYS" />
                     </HBox>
                 </VBox>
             </VBox>
@@ -77,22 +85,22 @@
                         <Label styleClass="path-label" text="截图快捷键：" />
                         <Button fx:id="changeKeyBind" onAction="#changeKeyBinding" prefHeight="28" styleClass="key-btn" />
                         <Label style="-fx-text-fill:#999;" text="+" />
-                        <RadioButton fx:id="isShiftNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Shift">
+                        <RadioButton fx:id="isShiftNeeded" onAction="#updateSettings" styleClass="mod-radio" text="Shift">
                             <toggleGroup><ToggleGroup fx:id="toggleGroup" /></toggleGroup>
                         </RadioButton>
-                        <RadioButton fx:id="isAltNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Alt" toggleGroup="$toggleGroup" />
-                        <RadioButton fx:id="isCtrlNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Ctrl" toggleGroup="$toggleGroup" />
+                        <RadioButton fx:id="isAltNeeded" onAction="#updateSettings" styleClass="mod-radio" text="Alt" toggleGroup="$toggleGroup" />
+                        <RadioButton fx:id="isCtrlNeeded" onAction="#updateSettings" styleClass="mod-radio" text="Ctrl" toggleGroup="$toggleGroup" />
                     </HBox>
                     <!-- 上传快捷键 -->
                     <HBox alignment="CENTER_LEFT" spacing="8">
                         <Label styleClass="path-label" text="上传快捷键：" />
                         <Button fx:id="changeUploadKeyBind" onAction="#changeUploadKeyBinding" prefHeight="28" styleClass="key-btn" />
                         <Label style="-fx-text-fill:#999;" text="+" />
-                        <RadioButton fx:id="uploadIsShiftNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Shift">
+                        <RadioButton fx:id="uploadIsShiftNeeded" onAction="#updateSettings" styleClass="mod-radio" text="Shift">
                             <toggleGroup><ToggleGroup fx:id="toggleGroup1" /></toggleGroup>
                         </RadioButton>
-                        <RadioButton fx:id="uploadIsAltNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Alt" toggleGroup="$toggleGroup1" />
-                        <RadioButton fx:id="uploadIsCtrlNeeded" onAction="#changeKeyBinding" styleClass="mod-radio" text="Ctrl" toggleGroup="$toggleGroup1" />
+                        <RadioButton fx:id="uploadIsAltNeeded" onAction="#updateSettings" styleClass="mod-radio" text="Alt" toggleGroup="$toggleGroup1" />
+                        <RadioButton fx:id="uploadIsCtrlNeeded" onAction="#updateSettings" styleClass="mod-radio" text="Ctrl" toggleGroup="$toggleGroup1" />
                     </HBox>
                     <!-- 识别模式 -->
                     <HBox alignment="CENTER_LEFT" spacing="8">
@@ -123,7 +131,7 @@
                <HBox alignment="CENTER_LEFT" layoutX="24.0" layoutY="130.0" prefHeight="31.0" prefWidth="586.0" spacing="8">
                   <children>
                      <Label styleClass="path-label" text="读取剪切板:" />
-                     <RadioButton mnemonicParsing="false" prefHeight="18.0" prefWidth="101.0" styleClass="mod-radio" text="覆盖原图">
+                     <RadioButton fx:id="pasteOverwrite" mnemonicParsing="false" onAction="#updateSettings" prefHeight="18.0" prefWidth="101.0" styleClass="mod-radio" text="覆盖原图">
                         <HBox.margin>
                            <Insets left="10.0" />
                         </HBox.margin>
@@ -131,13 +139,63 @@
                            <ToggleGroup fx:id="readMode" />
                         </toggleGroup>
                      </RadioButton>
-                     <RadioButton layoutX="148.0" layoutY="16.0" mnemonicParsing="false" prefHeight="18.0" prefWidth="130.0" styleClass="mod-radio" text="作为图片插入" toggleGroup="$readMode">
+                     <RadioButton fx:id="pasteAsImage" layoutX="148.0" layoutY="16.0" mnemonicParsing="false" onAction="#updateSettings" prefHeight="18.0" prefWidth="130.0" styleClass="mod-radio" text="作为图片插入" toggleGroup="$readMode">
                         <HBox.margin>
                            <Insets left="10.0" />
                         </HBox.margin>
                      </RadioButton>
                   </children>
                </HBox>
+                    <!-- 输出尺寸 -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="输出尺寸：" />
+                        <ComboBox fx:id="outputSizeMode" prefHeight="28" prefWidth="120" styleClass="setting-combo">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="原图尺寸" />
+                                    <String fx:value="50%" />
+                                    <String fx:value="75%" />
+                                    <String fx:value="150%" />
+                                    <String fx:value="200%" />
+                                    <String fx:value="自定义" />
+                                </FXCollections>
+                            </items>
+                        </ComboBox>
+                        <Label fx:id="customWidthLabel" managed="false" style="-fx-text-fill:#999;" text="宽" visible="false" />
+                        <TextField fx:id="outputCustomWidth" managed="false" prefHeight="28" prefWidth="70" promptText="宽" styleClass="path-field" visible="false" />
+                        <Label fx:id="customHeightLabel" managed="false" style="-fx-text-fill:#999;" text="x 高" visible="false" />
+                        <TextField fx:id="outputCustomHeight" managed="false" prefHeight="28" prefWidth="70" promptText="高" styleClass="path-field" visible="false" />
+                        <Label fx:id="customSizePxLabel" managed="false" style="-fx-text-fill:#999;" text="px" visible="false" />
+                    </HBox>
+                    <!-- 上传图片导入大小 -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="上传图片大小：" />
+                        <ComboBox fx:id="uploadSizeMode" prefHeight="28" prefWidth="120" styleClass="setting-combo">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="原图尺寸" />
+                                    <String fx:value="50%" />
+                                    <String fx:value="75%" />
+                                    <String fx:value="150%" />
+                                    <String fx:value="200%" />
+                                    <String fx:value="自定义" />
+                                </FXCollections>
+                            </items>
+                        </ComboBox>
+                        <Label fx:id="uploadWidthLabel" managed="false" style="-fx-text-fill:#999;" text="宽" visible="false" />
+                        <TextField fx:id="uploadCustomWidth" managed="false" prefHeight="28" prefWidth="70" promptText="宽" styleClass="path-field" visible="false" />
+                        <Label fx:id="uploadHeightLabel" managed="false" style="-fx-text-fill:#999;" text="x 高" visible="false" />
+                        <TextField fx:id="uploadCustomHeight" managed="false" prefHeight="28" prefWidth="70" promptText="高" styleClass="path-field" visible="false" />
+                        <Label fx:id="uploadPxLabel" managed="false" style="-fx-text-fill:#999;" text="px" visible="false" />
+                    </HBox>
+                    <!-- 空白图像大小 -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label styleClass="path-label" text="空白图像大小：" />
+                        <TextField fx:id="blankWidth" prefHeight="28" prefWidth="70" promptText="宽" styleClass="path-field" />
+                        <Label style="-fx-text-fill:#999;" text="x" />
+                        <TextField fx:id="blankHeight" prefHeight="28" prefWidth="70" promptText="高" styleClass="path-field" />
+                        <Label style="-fx-text-fill:#999;" text="px" />
+                    </HBox>
                     <!-- 行为选项 -->
                     <HBox alignment="CENTER_LEFT" spacing="4" style="-fx-padding: 4 0 0 0;">
                         <CheckBox fx:id="autoCopy" styleClass="opt-check" text="截图后自动复制" />

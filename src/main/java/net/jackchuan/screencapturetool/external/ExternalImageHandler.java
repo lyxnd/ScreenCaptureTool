@@ -25,10 +25,10 @@ public class ExternalImageHandler {
     }
     public void drawAllImages(GraphicsContext gc) {
         for (DrawableImage image : images) {
-            if(image.shouldRenderBorder()){
+            if(image.isRenderBorder()){
                 drawBorder(outerCanvas.getGraphicsContext2D(), image);
             }
-            if(image.shouldRender()){
+            if(image.isShouldRender()){
                 gc.drawImage(image.image,image.x, image.y,  image.width, image.height);
             }else {
                 outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
@@ -37,7 +37,7 @@ public class ExternalImageHandler {
     }
 
     public void updateImage(GraphicsContext gc,DrawableImage image){
-        if(image.shouldRenderBorder()){
+        if(image.isRenderBorder()){
             drawBorder(outerCanvas.getGraphicsContext2D(), image);
         }
         outerCanvas.getGraphicsContext2D().drawImage(image.image, image.x, image.y, image.width, image.height);
@@ -118,7 +118,7 @@ public class ExternalImageHandler {
         images.clear();
         drawAllImages(canvas.getGraphicsContext2D());
     }
-
+    @Data
     public static class DrawableImage implements Cloneable{
         private Image image;
         double x, y, width, height;
@@ -142,100 +142,14 @@ public class ExternalImageHandler {
             cloned.setY(getY());
             cloned.setWidth(getWidth());
             cloned.setHeight(getHeight());
-            cloned.setShouldRender(shouldRender());
-            cloned.setRenderBorder(shouldRenderBorder());
+            cloned.setShouldRender(isShouldRender());
+            cloned.setRenderBorder(isRenderBorder());
             return cloned;
         }
 
         public boolean isInside(double mouseX, double mouseY) {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
-
-        public void setImage(Image image) {
-            this.image = image;
-        }
-
-        public double getOriY() {
-            return oriY;
-        }
-
-        public double getOriX() {
-            return oriX;
-        }
-
-        public void setOriY(double oriY) {
-            this.oriY = oriY;
-        }
-
-        public void setOriX(double oriX) {
-            this.oriX = oriX;
-        }
-
-        public void setY(double y) {
-            this.y = y;
-        }
-
-        public void setWidth(double width) {
-            this.width = width;
-        }
-
-        public void setHeight(double height) {
-            this.height = height;
-        }
-
-        public void setX(double x) {
-            this.x = x;
-        }
-        public double getHeight() {
-            return height;
-        }
-
-        public double getWidth() {
-            return width;
-        }
-
-        public double getX() {
-            return x;
-        }
-
-        public double getY() {
-            return y;
-        }
-
-        public void setUndo(boolean undo) {
-            isUndo = undo;
-        }
-
-        public boolean isUndo() {
-            return isUndo;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Image getImage() {
-            return image;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-        public boolean shouldRender() {
-            return shouldRender;
-        }
-        public void setShouldRender(boolean shouldRender) {
-            this.shouldRender = shouldRender;
-        }
-
-        public void setRenderBorder(boolean renderBorder) {
-            this.renderBorder = renderBorder;
-        }
-
-        public boolean shouldRenderBorder() {
-            return renderBorder;
-        }
-
         @Override
         public boolean equals(Object o) {
             if(o instanceof DrawableImage drawableImage){

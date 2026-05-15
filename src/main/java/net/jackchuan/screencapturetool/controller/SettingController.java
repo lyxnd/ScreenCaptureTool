@@ -4,6 +4,7 @@ import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -18,6 +19,8 @@ import javafx.stage.Stage;
 import net.jackchuan.screencapturetool.CaptureProperties;
 import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import net.jackchuan.screencapturetool.external.stage.AlertHelper;
+import net.jackchuan.screencapturetool.external.stage.ProgressStage;
+import net.jackchuan.screencapturetool.network.HttpRequestHandler;
 import net.jackchuan.screencapturetool.util.FileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -29,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 
 /**
  * 功能：
@@ -45,13 +49,31 @@ public class SettingController {
     public VBox root;
     public CheckBox undo;
     public CheckBox redo;
-    public CheckBox paste;
+
     @FXML
     private ToggleGroup toggleGroup;
     @FXML
     private ToggleGroup toggleGroup1;
     @FXML
-    private TextField savePath, exePath, ocrDataPath, captureSavePath;
+    private ToggleGroup readMode;
+    @FXML
+    private RadioButton pasteOverwrite, pasteAsImage;
+    @FXML
+    private TextField savePath, exePath, ocrDataPath, captureSavePath, proxyUrl;
+    @FXML
+    private ComboBox<String> outputSizeMode;
+    @FXML
+    private TextField outputCustomWidth, outputCustomHeight;
+    @FXML
+    private Label customWidthLabel, customHeightLabel, customSizePxLabel;
+    @FXML
+    private ComboBox<String> uploadSizeMode;
+    @FXML
+    private TextField uploadCustomWidth, uploadCustomHeight;
+    @FXML
+    private Label uploadWidthLabel, uploadHeightLabel, uploadPxLabel;
+    @FXML
+    private TextField blankWidth, blankHeight;
     @FXML
     private Label state;
     @FXML
@@ -88,7 +110,11 @@ public class SettingController {
             setBox.setPrefWidth(parent.getWidth());
             initSettings();
             parent.setOnCloseRequest(e -> {
-//                saveOnOriginalPath();
+                if (CaptureProperties.configPath != null
+                        && !CaptureProperties.configPath.isBlank()
+                        && !"configuration.txt".equals(CaptureProperties.configPath)) {
+                    CaptureProperties.saveOnOriginalPath();
+                }
             });
             captureType.valueProperty().addListener((obj, oldVal, newVal) -> {
                 CaptureProperties.captureType = newVal;
@@ -102,57 +128,125 @@ public class SettingController {
             detectMode.valueProperty().addListener((obj, oldVal, newVal) -> {
                 CaptureProperties.detectMode = newVal;
             });
+            autoCopy.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                CaptureProperties.autoCopy = newVal;
+            });
+            autoLaunch.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                CaptureProperties.autoLaunch = newVal;
+            });
+            proxyUrl.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused) CaptureProperties.proxyUrl = proxyUrl.getText().strip();
+            });
+            outputSizeMode.valueProperty().addListener((obs, old, newVal) -> {
+                if (newVal == null) return;
+                CaptureProperties.outputSizeMode = newVal;
+                setCustomSizeVisible("自定义".equals(newVal));
+            });
+            outputCustomWidth.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused) {
+                    try { CaptureProperties.outputCustomWidth = Integer.parseInt(outputCustomWidth.getText().strip()); }
+                    catch (NumberFormatException ignored) {}
+                }
+            });
+            outputCustomHeight.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused) {
+                    try { CaptureProperties.outputCustomHeight = Integer.parseInt(outputCustomHeight.getText().strip()); }
+                    catch (NumberFormatException ignored) {}
+                }
+            });
+            uploadSizeMode.valueProperty().addListener((obs, old, newVal) -> {
+                if (newVal == null) return;
+                CaptureProperties.uploadSizeMode = newVal;
+                setUploadSizeVisible("自定义".equals(newVal));
+            });
+            uploadCustomWidth.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused) {
+                    try { CaptureProperties.uploadCustomWidth = Integer.parseInt(uploadCustomWidth.getText().strip()); }
+                    catch (NumberFormatException ignored) {}
+                }
+            });
+            uploadCustomHeight.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused) {
+                    try { CaptureProperties.uploadCustomHeight = Integer.parseInt(uploadCustomHeight.getText().strip()); }
+                    catch (NumberFormatException ignored) {}
+                }
+            });
+            blankWidth.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused) {
+                    try { CaptureProperties.blankImageWidth = Integer.parseInt(blankWidth.getText().strip()); }
+                    catch (NumberFormatException ignored) {}
+                }
+            });
+            blankHeight.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused) {
+                    try { CaptureProperties.blankImageHeight = Integer.parseInt(blankHeight.getText().strip()); }
+                    catch (NumberFormatException ignored) {}
+                }
+            });
             GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
                 @Override
                 public void nativeKeyPressed(NativeKeyEvent e) {
-                    if (changing && e.getKeyCode() != NativeKeyEvent.VC_SHIFT &&
-                            e.getKeyCode() != NativeKeyEvent.VC_ALT && e.getKeyCode() != NativeKeyEvent.CTRL_MASK) {
-
-                        Platform.runLater(() -> {
-                            if (changedKey == 1) {
-                                CaptureProperties.CAPTURE_KEY = e.getKeyCode();
-                                CaptureProperties.isShiftNeeded = isShiftNeeded.isSelected();
-                                CaptureProperties.isAltNeeded = isAltNeeded.isSelected();
-                                CaptureProperties.isCtrlNeeded = isCtrlNeeded.isSelected();
-                                changeKeyBind.setText(NativeKeyEvent.getKeyText(CaptureProperties.CAPTURE_KEY));
-                            } else if(changedKey==2){
-                                CaptureProperties.UPLOAD_KEY = e.getKeyCode();
-                                CaptureProperties.uploadIsShiftNeeded = uploadIsShiftNeeded.isSelected();
-                                CaptureProperties.uploadIsAltNeeded = uploadIsAltNeeded.isSelected();
-                                CaptureProperties.uploadIsCtrlNeeded = uploadIsCtrlNeeded.isSelected();
-                                changeUploadKeyBind.setText(NativeKeyEvent.getKeyText(CaptureProperties.UPLOAD_KEY));
-                            }
-                            changing = false;
-                        });
-                    }
-                }
-
-                @Override
-                public void nativeKeyReleased(NativeKeyEvent e) {
-                    if (parent.isFocused()) {
+                    if (!changing) return;
+                    int keyCode = e.getKeyCode();
+                    // 忽略修饰键自身的按下事件，等待主键
+                    if (keyCode == NativeKeyEvent.VC_SHIFT || keyCode == NativeKeyEvent.VC_ALT
+                            || keyCode == NativeKeyEvent.CTRL_MASK) return;
+                    int modifiers = e.getModifiers();
+                    Platform.runLater(() -> {
                         changing = false;
-                        updateState("当前快捷键更改为 ：" + getKeyBind());
-                    }
+                        if (keyCode == NativeKeyEvent.VC_ESCAPE) {
+                            // ESC 取消，恢复按钮原样
+                            restoreButton(changedKey);
+                            updateState("已取消快捷键设置");
+                            return;
+                        }
+                        boolean shift = (modifiers & NativeKeyEvent.SHIFT_MASK) != 0;
+                        boolean ctrl  = (modifiers & NativeKeyEvent.CTRL_MASK)  != 0;
+                        boolean alt   = (modifiers & NativeKeyEvent.ALT_MASK)   != 0;
+                        String keyText = NativeKeyEvent.getKeyText(keyCode);
+                        if (changedKey == 1) {
+                            CaptureProperties.CAPTURE_KEY = keyCode;
+                            CaptureProperties.isShiftNeeded = shift;
+                            CaptureProperties.isCtrlNeeded  = ctrl;
+                            CaptureProperties.isAltNeeded   = alt;
+                            isShiftNeeded.setSelected(shift);
+                            isCtrlNeeded.setSelected(ctrl);
+                            isAltNeeded.setSelected(alt);
+                            changeKeyBind.setText(keyText);
+                            changeKeyBind.setStyle("");
+                        } else {
+                            CaptureProperties.UPLOAD_KEY = keyCode;
+                            CaptureProperties.uploadIsShiftNeeded = shift;
+                            CaptureProperties.uploadIsCtrlNeeded  = ctrl;
+                            CaptureProperties.uploadIsAltNeeded   = alt;
+                            uploadIsShiftNeeded.setSelected(shift);
+                            uploadIsCtrlNeeded.setSelected(ctrl);
+                            uploadIsAltNeeded.setSelected(alt);
+                            changeUploadKeyBind.setText(keyText);
+                            changeUploadKeyBind.setStyle("");
+                        }
+                        String modifier = shift ? "Shift + " : ctrl ? "Ctrl + " : alt ? "Alt + " : "";
+                        updateState("快捷键已更新：" + modifier + keyText);
+                    });
                 }
 
                 @Override
-                public void nativeKeyTyped(NativeKeyEvent e) {
-                    // 不需要实现此方法
-                }
+                public void nativeKeyReleased(NativeKeyEvent e) {}
+
+                @Override
+                public void nativeKeyTyped(NativeKeyEvent e) {}
             });
         });
     }
 
-    private String getKeyBind() {
-        String keyBind = "";
-        if (isShiftNeeded.isSelected()) {
-            keyBind = "Shift + ";
-        } else if (isCtrlNeeded.isSelected()) {
-            keyBind = "Ctrl + ";
-        } else if (isAltNeeded.isSelected()) {
-            keyBind = "Alt + ";
+    private void restoreButton(int keyType) {
+        if (keyType == 1) {
+            changeKeyBind.setText(NativeKeyEvent.getKeyText(CaptureProperties.CAPTURE_KEY));
+            changeKeyBind.setStyle("");
+        } else {
+            changeUploadKeyBind.setText(NativeKeyEvent.getKeyText(CaptureProperties.UPLOAD_KEY));
+            changeUploadKeyBind.setStyle("");
         }
-        return keyBind + changeKeyBind.getText();
     }
 
     private void initSettings() {
@@ -183,6 +277,46 @@ public class SettingController {
         ocrDataPath.setText(CaptureProperties.ocrPath);
         logPath.setText(CaptureProperties.logPath);
         captureSavePath.setText(CaptureProperties.captureSavePath);
+        proxyUrl.setText(CaptureProperties.proxyUrl);
+        pasteOverwrite.setSelected(!CaptureProperties.pasteAsExternalImage);
+        pasteAsImage.setSelected(CaptureProperties.pasteAsExternalImage);
+        outputSizeMode.setValue(CaptureProperties.outputSizeMode);
+        outputCustomWidth.setText(String.valueOf(CaptureProperties.outputCustomWidth));
+        outputCustomHeight.setText(String.valueOf(CaptureProperties.outputCustomHeight));
+        boolean isCustom = "自定义".equals(CaptureProperties.outputSizeMode);
+        setCustomSizeVisible(isCustom);
+        uploadSizeMode.setValue(CaptureProperties.uploadSizeMode);
+        uploadCustomWidth.setText(String.valueOf(CaptureProperties.uploadCustomWidth));
+        uploadCustomHeight.setText(String.valueOf(CaptureProperties.uploadCustomHeight));
+        setUploadSizeVisible("自定义".equals(CaptureProperties.uploadSizeMode));
+        blankWidth.setText(String.valueOf(CaptureProperties.blankImageWidth));
+        blankHeight.setText(String.valueOf(CaptureProperties.blankImageHeight));
+    }
+
+    private void setCustomSizeVisible(boolean visible) {
+        customWidthLabel.setVisible(visible);
+        customWidthLabel.setManaged(visible);
+        outputCustomWidth.setVisible(visible);
+        outputCustomWidth.setManaged(visible);
+        customHeightLabel.setVisible(visible);
+        customHeightLabel.setManaged(visible);
+        outputCustomHeight.setVisible(visible);
+        outputCustomHeight.setManaged(visible);
+        customSizePxLabel.setVisible(visible);
+        customSizePxLabel.setManaged(visible);
+    }
+
+    private void setUploadSizeVisible(boolean visible) {
+        uploadWidthLabel.setVisible(visible);
+        uploadWidthLabel.setManaged(visible);
+        uploadCustomWidth.setVisible(visible);
+        uploadCustomWidth.setManaged(visible);
+        uploadHeightLabel.setVisible(visible);
+        uploadHeightLabel.setManaged(visible);
+        uploadCustomHeight.setVisible(visible);
+        uploadCustomHeight.setManaged(visible);
+        uploadPxLabel.setVisible(visible);
+        uploadPxLabel.setManaged(visible);
     }
 
     @FXML
@@ -214,9 +348,6 @@ public class SettingController {
             }
             case "redo" -> {
                 CaptureProperties.redo = redo.isSelected();
-            }
-            case "paste" -> {
-                CaptureProperties.paste = paste.isSelected();
             }
             case "rubber" -> {
                 CaptureProperties.rubber = rubber.isSelected();
@@ -251,6 +382,12 @@ public class SettingController {
             case "showSettings" -> {
                 CaptureProperties.showSettings = popSetting.isSelected();
             }
+            case "pasteOverwrite" -> {
+                CaptureProperties.pasteAsExternalImage = false;
+            }
+            case "pasteAsImage" -> {
+                CaptureProperties.pasteAsExternalImage = true;
+            }
         }
 
     }
@@ -271,10 +408,11 @@ public class SettingController {
 
     @FXML
     private void changeKeyBinding() {
-        changing = true;
-        //截图快捷键
         changedKey = 1;
-        state.setText("请输入截图快捷键(仅支持最多双按键，勾选三个辅助按键之一的一个，然后输入一个快捷键即可)");
+        changing = true;
+        changeKeyBind.setText("[ 按下快捷键... ]");
+        changeKeyBind.setStyle("-fx-background-color: #ffe082;");
+        state.setText("按下新快捷键（可同时按住 Shift / Ctrl / Alt 组合，ESC 取消）");
     }
 
     @FXML
@@ -348,7 +486,6 @@ public class SettingController {
                 "\n enableAll=" + enableAll.isSelected() +
                 "\n export=" + export.isSelected() +
                 "\n copy=" + copy.isSelected() +
-                "\n paste=" + paste.isSelected() +
                 "\n undo=" + undo.isSelected() +
                 "\n redo=" + redo.isSelected() +
                 "\n reset=" + reset.isSelected() +
@@ -369,6 +506,18 @@ public class SettingController {
                 "\n scaleOnMouse=" + CaptureProperties.scaleOnMouse +
                 "\n showSettings=" + CaptureProperties.showSettings +
                 "\n captureSavePath=" + captureSavePath.getText() +
+                "\n lastSaveDir=" + CaptureProperties.lastSaveDir +
+                "\n lastUploadDir=" + CaptureProperties.lastUploadDir +
+                "\n proxyUrl=" + proxyUrl.getText().strip() +
+                "\n pasteAsExternalImage=" + CaptureProperties.pasteAsExternalImage +
+                "\n outputSizeMode=" + outputSizeMode.getValue() +
+                "\n outputCustomWidth=" + outputCustomWidth.getText().strip() +
+                "\n outputCustomHeight=" + outputCustomHeight.getText().strip() +
+                "\n uploadSizeMode=" + uploadSizeMode.getValue() +
+                "\n uploadCustomWidth=" + uploadCustomWidth.getText().strip() +
+                "\n uploadCustomHeight=" + uploadCustomHeight.getText().strip() +
+                "\n blankImageWidth=" + blankWidth.getText().strip() +
+                "\n blankImageHeight=" + blankHeight.getText().strip() +
                 "\n}";
     }
 
@@ -453,7 +602,7 @@ public class SettingController {
         }
         // wscript  "D:\\CaptureTool\\runtime\\CaptureTool.vbs"
         path = path.replace("\\", "\\\\");
-        path = "wscript \"" + path + "\"";
+        path = "wscript \\\"" + path + "\\\"";
         String regContent = String.format("""
                 Windows Registry Editor Version 5.00
                 [HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run]
@@ -552,54 +701,67 @@ public class SettingController {
 
     public void locateOCRPath() {
         DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("选择OCR数据安装目录");
-        chooser.setInitialDirectory(new File("D:/"));
+        chooser.setTitle("选择tessdata目录");
+        chooser.setInitialDirectory(CaptureProperties.getSelectDirectory());
         File file = chooser.showDialog(null);
         if (file != null) {
-            ocrDataPath.setText(file.getAbsolutePath());
-            state.setText("OCR数据安装目录更改成功");
+            File[] trainedData = file.listFiles(f -> f.getName().endsWith(".traineddata"));
+            if (trainedData == null || trainedData.length == 0) {
+                state.setText("所选目录下未找到 .traineddata 文件，请确认选择正确的 tessdata 目录");
+                return;
+            }
             CaptureProperties.ocrPath = file.getAbsolutePath();
+            CaptureProperties.ocrFileInstalled = true;
+            ocrDataPath.setText(file.getAbsolutePath());
+            state.setText("OCR数据目录设置成功（找到 " + trainedData.length + " 个语言文件）");
         }
     }
 
-    public void unzipFromLocal() throws IOException {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("选择数据zip文件");
-        fc.setInitialFileName("tessdata.zip");
-        fc.setInitialDirectory(CaptureProperties.getSelectDirectory());
-        File file = fc.showOpenDialog(null);
-        if (file != null) {
-            if (file.getName().endsWith(".zip")) {
-                //需要解压
-                if (!CaptureProperties.exePath.isBlank()) {
-                    File f = new File(CaptureProperties.exePath);
-                    FileHandler.unzip(file.getPath(), f.getParentFile().getAbsolutePath());
-                    Path path1 = Path.of(f.getParent(), "tessdata", "temp-main");
-                    Path path2 = Path.of(f.getParent(), "tessdata");
-                    FileHandler.moveToAnotherDirectory(path1, path2);
-                    CaptureProperties.ocrPath = new File(CaptureProperties.exePath).getParentFile().getAbsolutePath() + "/tessdata";
-                } else {
-                    DirectoryChooser chooser = new DirectoryChooser();
-                    chooser.setTitle("选择解压目录");
-                    chooser.setInitialDirectory(CaptureProperties.getSelectDirectory());
-                    File f = chooser.showDialog(null);
-                    if (f != null) {
-                        FileHandler.unzip(file.getAbsolutePath(), f.getAbsolutePath());
-                        Path path1 = Path.of(f.getAbsolutePath(), "tessdata", "temp-main");
-                        Path path2 = Path.of(f.getAbsolutePath(), "tessdata");
-                        FileHandler.moveToAnotherDirectory(path1, path2);
-                        CaptureProperties.ocrPath = f.getAbsolutePath() + "/tessdata";
-                    }
-                }
-            } else {
-                //直接设置目录
-                CaptureProperties.ocrPath = file.getParent() + "/tessdata";
-            }
-            ocrDataPath.setText(CaptureProperties.ocrPath);
-            CaptureProperties.ocrFileInstalled = true;
-            state.setText("解压成功，OCR数据路径设置完成");
-            saveOnOriginalPath();
+    public void downloadOcrData() {
+        String destRoot;
+        if (!CaptureProperties.exePath.isBlank()) {
+            destRoot = new File(CaptureProperties.exePath).getParentFile().getAbsolutePath();
+        } else {
+            DirectoryChooser chooser = new DirectoryChooser();
+            chooser.setTitle("选择 OCR 数据下载目录");
+            chooser.setInitialDirectory(CaptureProperties.getSelectDirectory());
+            File f = chooser.showDialog(parent);
+            if (f == null) return;
+            destRoot = f.getAbsolutePath();
         }
+        String finalDestRoot = destRoot;
+        String url = "https://github.com/lyxnd/temp/archive/refs/heads/main.zip";
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Path zipPath = Path.of(finalDestRoot, "tessdata.zip");
+                HttpRequestHandler.downloadFile(url, zipPath);
+                // unzip 内部会在 destRoot 后追加 /tessdata，提取后结构为 tessdata/temp-main/
+                FileHandler.unzip(zipPath.toString(), finalDestRoot);
+                Path tempMain = Path.of(finalDestRoot, "tessdata", "temp-main");
+                Path tessdata = Path.of(finalDestRoot, "tessdata");
+                if (Files.exists(tempMain)) {
+                    FileHandler.moveToAnotherDirectory(tempMain, tessdata);
+                    // 清理临时子目录
+                    Files.walk(tempMain)
+                            .sorted(Comparator.reverseOrder())
+                            .forEach(p -> { try { Files.delete(p); } catch (IOException ignored) {} });
+                }
+                return null;
+            }
+        };
+        String tessDataPath = Path.of(destRoot, "tessdata").toString();
+        ProgressStage progressStage = new ProgressStage("下载/更新 OCR 数据", parent, task);
+        progressStage.setOcrPath(tessDataPath);
+        // ProgressStage 关闭后（成功或取消）同步更新设置界面 UI
+        progressStage.setOnHidden(e -> Platform.runLater(() -> {
+            ocrDataPath.setText(CaptureProperties.ocrPath != null ? CaptureProperties.ocrPath : "");
+            if (CaptureProperties.ocrFileInstalled) {
+                state.setText("OCR 数据下载/更新完成");
+            }
+        }));
+        progressStage.show();
+        progressStage.startTask();
     }
 
     public void openConfigFile() throws IOException {
@@ -638,10 +800,15 @@ public class SettingController {
         System.exit(0);
     }
 
+    public void restartProgram() {
+        ScreenCaptureToolApp.restartProgram();
+    }
+
     public void changeUploadKeyBinding() {
-        changing = true;
-        //截图快捷键
         changedKey = 2;
-        state.setText("请输入上传图片的快捷键(仅支持最多双按键，勾选三个辅助按键之一的一个，然后输入一个快捷键即可)");
+        changing = true;
+        changeUploadKeyBind.setText("[ 按下快捷键... ]");
+        changeUploadKeyBind.setStyle("-fx-background-color: #ffe082;");
+        state.setText("按下新快捷键（可同时按住 Shift / Ctrl / Alt 组合，ESC 取消）");
     }
 }

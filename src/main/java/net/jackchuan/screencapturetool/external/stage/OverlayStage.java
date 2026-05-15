@@ -2,7 +2,6 @@ package net.jackchuan.screencapturetool.external.stage;
 
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
@@ -32,7 +31,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.W32APIOptions;
 
 import javax.imageio.ImageIO;
@@ -52,6 +50,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public class OverlayStage extends Stage {
 
+    private static final Font INFO_FONT = Font.font("楷体", 12);
+
     /** 最小化的 Dwmapi 绑定，用于获取去除透明阴影后的真实窗口边界 */
     private interface DwmApi extends com.sun.jna.Library {
         DwmApi INSTANCE = Native.load("dwmapi", DwmApi.class, W32APIOptions.DEFAULT_OPTIONS);
@@ -63,17 +63,20 @@ public class OverlayStage extends Stage {
     private Image image;
     private Canvas canvas;
     private GraphicsContext gc;
-    private Stage displayStage;
     private double startX, startY, endX, endY;
     private double autoStartX, autoStartY, autoEndX, autoEndY;
     private boolean hasAutoRect = false;
     private volatile int[] hoveredWindowRect = null;
     private volatile List<int[]> cachedEdgeRects = null;
     private volatile boolean detectingEdge = false;
+    private volatile boolean detectingWindow = false;
     private long lastDetectTime = 0;
+    private long lastDragDrawTime = 0;
+    private static final long DRAG_INTERVAL_MS = 16; // ~60fps
     private ContextMenu popMenu;
     private MenuItem fullCut, test, test1, captureWindow;
     private Pair<Integer, Integer> size;
+    private volatile WinDef.HWND overlayHwnd = null;
 
     public OverlayStage(Image image) {
         init(image);
@@ -108,6 +111,7 @@ public class OverlayStage extends Stage {
         this.getIcons().add(new Image(ScreenCaptureToolApp
                 .class.getResource("assets/icon/shortcut.png").toExternalForm()));
         this.setAlwaysOnTop(true);
+        this.setTitle("__SCT_OVERLAY__");
     }
 
     private void initialAction() {
@@ -159,7 +163,11 @@ public class OverlayStage extends Stage {
             if (e.getButton() == MouseButton.PRIMARY) {
                 endX = e.getX();
                 endY = e.getY();
-                drawRectAndDotInfo(gc, startX, startY, endX, endY, canvas.getWidth(), canvas.getHeight());
+                long now = System.currentTimeMillis();
+                if (now - lastDragDrawTime >= DRAG_INTERVAL_MS) {
+                    lastDragDrawTime = now;
+                    drawRectAndDotInfo(gc, startX, startY, endX, endY, canvas.getWidth(), canvas.getHeight());
+                }
             }
         });
         canvas.setOnMouseReleased(e -> {
@@ -201,6 +209,7 @@ public class OverlayStage extends Stage {
 
     /** 窗口检测：查询鼠标下方的顶层非本进程窗口，在画布上高亮。*/
     private void handleWindowDetection(double mx, double my) {
+        if (detectingWindow) return;
         double scale = Screen.getPrimary().getOutputScaleX();
         javafx.geometry.Point2D screenPt = canvas.localToScreen(mx, my);
         javafx.geometry.Point2D origin   = canvas.localToScreen(0, 0);
@@ -210,8 +219,10 @@ public class OverlayStage extends Stage {
         double ox = origin != null ? origin.getX() : 0;
         double oy = origin != null ? origin.getY() : 0;
 
+        detectingWindow = true;
         CompletableFuture.supplyAsync(() -> detectWindowAt(sx, sy))
                 .thenAccept(winRect -> Platform.runLater(() -> {
+                    detectingWindow = false;
                     double cw = canvas.getWidth(), ch = canvas.getHeight();
                     restoreBackground(cw, ch);
                     if (winRect == null) { hasAutoRect = false; hoveredWindowRect = null; return; }
@@ -323,24 +334,20 @@ public class OverlayStage extends Stage {
      * 使用 DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS) 获取去除透明阴影后的实际可见边界。
      */
     private int[] detectWindowAt(int sx, int sy) {
-        long myPid = ProcessHandle.current().pid();
-        // GetDesktopWindow + GetWindow(GW_CHILD=5) 等价于 GetTopWindow(null)，JNA 标准接口已含这两个方法
-        // 后接 GetWindow(GW_HWNDNEXT=2) 按真实 Z-order 从顶往下遍历，保证找到最顶层目标窗口
+        if (overlayHwnd == null) {
+            overlayHwnd = User32.INSTANCE.FindWindow(null, "__SCT_OVERLAY__");
+        }
         WinDef.HWND desktop = User32.INSTANCE.GetDesktopWindow();
         WinDef.HWND hwnd = User32.INSTANCE.GetWindow(desktop, new WinDef.DWORD(5)); // GW_CHILD
         while (hwnd != null) {
-            if (User32.INSTANCE.IsWindowVisible(hwnd)) {
-                IntByReference pidRef = new IntByReference();
-                User32.INSTANCE.GetWindowThreadProcessId(hwnd, pidRef);
-                if ((long) pidRef.getValue() != myPid) {
-                    WinDef.RECT rect = getVisibleWindowRect(hwnd);
-                    int w = rect.right - rect.left;
-                    int h = rect.bottom - rect.top;
-                    if (w > 10 && h > 10
-                            && sx >= rect.left && sx <= rect.right
-                            && sy >= rect.top  && sy <= rect.bottom) {
-                        return new int[]{rect.left, rect.top, w, h};
-                    }
+            if (User32.INSTANCE.IsWindowVisible(hwnd) && !hwnd.equals(overlayHwnd)) {
+                WinDef.RECT rect = getVisibleWindowRect(hwnd);
+                int w = rect.right - rect.left;
+                int h = rect.bottom - rect.top;
+                if (w > 10 && h > 10
+                        && sx >= rect.left && sx <= rect.right
+                        && sy >= rect.top  && sy <= rect.bottom) {
+                    return new int[]{rect.left, rect.top, w, h};
                 }
             }
             hwnd = User32.INSTANCE.GetWindow(hwnd, new WinDef.DWORD(2)); // GW_HWNDNEXT
@@ -394,33 +401,7 @@ public class OverlayStage extends Stage {
     }
 
     private void showScreenshotPopup(javafx.scene.image.Image image) {
-        displayStage = new Stage();
-        displayStage.setTitle("Screenshot editor");
-        displayStage.getIcons().add(new Image(ScreenCaptureToolApp
-                .class.getResource("assets/icon/editor.png").toExternalForm()));
-        // 加载 FXML
-        FXMLLoader loader = new FXMLLoader(ScreenCaptureToolApp.class.getResource("capture.fxml"));
-        Scene scene = null;
-        try {
-            scene = new Scene(loader.load());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        scene.getStylesheets().add(ScreenCaptureToolApp.class.getResource("assets/css/style.css").toExternalForm());
-        // 设置控制器
-        CaptureDisplayController controller = loader.getController();
-//        controller.setCapture(image, ScreenCaptureUtil.shouldScale(image));
-        controller.setCapture(image, false);
-        controller.setOriginalImage(image);
-        displayStage.setScene(scene);
-        displayStage.setOnShown(e -> Platform.runLater(()->{
-            Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-            double x = bounds.getMinX() + (bounds.getWidth() - displayStage.getWidth()) / 2;
-            double y = bounds.getMinY() + (bounds.getHeight() - displayStage.getHeight()) / 2;
-            displayStage.setX(Math.max(bounds.getMinX(), x));
-            displayStage.setY(Math.max(bounds.getMinY(), y));
-        }));
-        displayStage.show();
+        ScreenCaptureToolApp.showEditorWithImage(image);
     }
 
     private void closeOverlayStage() {
@@ -452,7 +433,7 @@ public class OverlayStage extends Stage {
         String info = "w : " + width + ", h : " + height;
         gc.setStroke(Color.GREEN);
         gc.setLineWidth(2);
-        gc.setFont(new Font("楷体", 12));
+        gc.setFont(INFO_FONT);
         gc.strokeText(info, Math.max(startX, endX) + 10, Math.max(startY, endY) + 10, 100);
     }
 }

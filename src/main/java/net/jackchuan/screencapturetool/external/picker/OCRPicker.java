@@ -4,6 +4,7 @@ import javafx.scene.Cursor;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import net.jackchuan.screencapturetool.CaptureProperties;
+import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 import net.jackchuan.screencapturetool.external.stage.AlertHelper;
 
@@ -50,6 +51,7 @@ public class OCRPicker extends CustomPicker{
                         "Unable to find tessData","please download data first");
             }
         } catch (IOException e) {
+            ScreenCaptureToolApp.LOGGER.info("ocr error {}",e.getMessage());
             throw new RuntimeException(e);
         }
 

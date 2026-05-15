@@ -35,6 +35,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static net.jackchuan.screencapturetool.controller.CaptureDisplayController.settingStage;
+
 /**
  * 功能：
  * 作者：jackchuan
@@ -47,6 +49,8 @@ public class ScreenCaptureToolApp extends Application {
     private static boolean shotting = false;
     private static boolean showing = false;
     private static OverlayStage overlayStage;
+    static Stage editorStage;
+    static CaptureDisplayController editorController;
     public static Logger LOGGER;
     static {
         try {
@@ -88,28 +92,28 @@ public class ScreenCaptureToolApp extends Application {
             openConfigWindow();
         }
 
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                while(true){
-//                    try {
-//                        Thread.sleep(1000*15);
-//                        OperatingSystemMXBean osBean =
-//                                (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-//                        Runtime runtime = Runtime.getRuntime();
-//                        long total = runtime.totalMemory(); // 当前分配给 JVM 的总内存（字节）
-//                        long free = runtime.freeMemory();   // JVM 内部空闲内存
-//                        long used = total - free;           // 实际已用堆内存
-//                        long max = runtime.maxMemory();     // JVM 可用的最大内存（字节）
-//                        double rss = osBean.getProcessCpuLoad();
-//                        LOGGER.info("memory used = {} Mb, Total memory = {} Mb, Max memory = {} Mb,  cpu used ratio = {}",
-//                                used / 1024 / 1024,total / 1024 / 1024,max / 1024 / 1024,rss);
-//                    } catch (InterruptedException e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                }
-//            }
-//        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    try {
+                        Thread.sleep(1000*15);
+                        OperatingSystemMXBean osBean =
+                                (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                        Runtime runtime = Runtime.getRuntime();
+                        long total = runtime.totalMemory(); // 当前分配给 JVM 的总内存（字节）
+                        long free = runtime.freeMemory();   // JVM 内部空闲内存
+                        long used = total - free;           // 实际已用堆内存
+                        long max = runtime.maxMemory();     // JVM 可用的最大内存（字节）
+                        double rss = osBean.getProcessCpuLoad();
+                        LOGGER.info("memory used = {} Mb, Total memory = {} Mb, Max memory = {} Mb,  cpu used ratio = {}",
+                                used / 1024 / 1024,total / 1024 / 1024,max / 1024 / 1024,rss);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }).start();
     }
 
 
@@ -163,7 +167,7 @@ public class ScreenCaptureToolApp extends Application {
                         }else if(CaptureProperties.uploadIsCtrlNeeded&&ctrlPressed){
                             showing = true;
                             uploadImage();
-                        }else {
+                        }else if(!CaptureProperties.uploadIsAltNeeded && !CaptureProperties.uploadIsCtrlNeeded && !CaptureProperties.uploadIsShiftNeeded) {
                             uploadImage();
                         }
                     }
@@ -209,7 +213,10 @@ public class ScreenCaptureToolApp extends Application {
     }
 
     private static void openConfigWindow() {
-        Stage settingStage = new Stage();
+        if(settingStage==null)
+            settingStage = new Stage();
+        else
+            settingStage.requestFocus();
         FXMLLoader loader = new FXMLLoader(ScreenCaptureToolApp.class.getResource("setting.fxml"));
         Scene scene = null;
         try {
@@ -262,33 +269,44 @@ public class ScreenCaptureToolApp extends Application {
         super.stop();
     }
 
-    public static void showImage(Image image){
-        Stage displayStage = new Stage();
-        displayStage.setTitle("Screenshot editor");
-        displayStage.getIcons().add(new Image(ScreenCaptureToolApp
-                .class.getResource("assets/icon/editor.png").toExternalForm()));
-        // 加载 FXML
-        FXMLLoader loader = new FXMLLoader(ScreenCaptureToolApp.class.getResource("capture.fxml"));
-        Scene scene = null;
-        try {
-            scene = new Scene(loader.load());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public static void showEditorWithImage(Image image) {
+        if (editorStage != null && editorController != null) {
+            editorController.resetForNewCapture(image);
+            if (!editorStage.isShowing()) {
+                editorStage.show();
+            }
+            editorStage.toFront();
+            editorStage.requestFocus();
+        } else {
+            editorStage = new Stage();
+            editorStage.setTitle("Screenshot editor");
+            editorStage.getIcons().add(new Image(ScreenCaptureToolApp
+                    .class.getResource("assets/icon/editor.png").toExternalForm()));
+            FXMLLoader loader = new FXMLLoader(ScreenCaptureToolApp.class.getResource("capture.fxml"));
+            Scene scene;
+            try {
+                scene = new Scene(loader.load());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            scene.getStylesheets().add(ScreenCaptureToolApp.class.getResource("assets/css/style.css").toExternalForm());
+            editorController = loader.getController();
+            editorController.setCapture(image, true);
+            editorController.setOriginalImage(image);
+            editorStage.setScene(scene);
+            editorStage.setOnShown(e -> Platform.runLater(() -> {
+                Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+                double x = bounds.getMinX() + (bounds.getWidth() - editorStage.getWidth()) / 2;
+                double y = bounds.getMinY() + (bounds.getHeight() - editorStage.getHeight()) / 2;
+                editorStage.setX(Math.max(bounds.getMinX(), x));
+                editorStage.setY(Math.max(bounds.getMinY(), y));
+            }));
+            editorStage.show();
         }
-        scene.getStylesheets().add(ScreenCaptureToolApp.class.getResource("assets/css/style.css").toExternalForm());
-        // 设置控制器
-        CaptureDisplayController controller = loader.getController();
-        controller.setCapture(image,ScreenCaptureUtil.shouldScale(image));
-        controller.setOriginalImage(image);
-        displayStage.setScene(scene);
-        displayStage.setOnShown(e -> Platform.runLater(() -> {
-            Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-            double x = bounds.getMinX() + (bounds.getWidth() - displayStage.getWidth()) / 2;
-            double y = bounds.getMinY() + (bounds.getHeight() - displayStage.getHeight()) / 2;
-            displayStage.setX(Math.max(bounds.getMinX(), x));
-            displayStage.setY(Math.max(bounds.getMinY(), y));
-        }));
-        displayStage.show();
+    }
+
+    public static void showImage(Image image) {
+        showEditorWithImage(image);
     }
 
     public static void uploadImage(){
@@ -296,10 +314,11 @@ public class ScreenCaptureToolApp extends Application {
             if(!isOpen){
                 isOpen=true;
                 fc = new FileChooser();
-                fc.setInitialDirectory(CaptureProperties.getSelectDirectory());
+                fc.setInitialDirectory(CaptureProperties.getUploadDirectory());
                 fc.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("图片", "*.jpg", "*.png"));
                 File file = fc.showOpenDialog(null);
                 if(file!=null){
+                    CaptureProperties.updateLastUploadDir(file.getParent());
                     BufferedImage bmg = null;
                     try {
                         bmg = ImageIO.read(file);
@@ -307,6 +326,7 @@ public class ScreenCaptureToolApp extends Application {
                         ScreenCaptureToolApp.LOGGER.error("上传图片失败,",e);
                         throw new RuntimeException(e);
                     }
+                    bmg = ImageFormatHandler.applyUploadSize(bmg);
                     showImage(ImageFormatHandler.toFXImage(bmg));
                 }
                 isOpen=false;
@@ -315,4 +335,30 @@ public class ScreenCaptureToolApp extends Application {
     }
     private static FileChooser fc;
     private static boolean isOpen=false;
+
+    public static void restartProgram() {
+        try {
+            if (!CaptureProperties.exePath.isBlank() && new File(CaptureProperties.exePath).isFile()) {
+                new ProcessBuilder(CaptureProperties.exePath)
+                        .directory(new File(CaptureProperties.exePath).getParentFile())
+                        .start();
+            } else {
+                // 开发环境：从 ProcessHandle 重建启动命令
+                ProcessHandle current = ProcessHandle.current();
+                String cmd = current.info().command().orElse(null);
+                String[] jvmArgs = current.info().arguments().orElse(new String[]{});
+                if (cmd != null) {
+                    java.util.List<String> command = new java.util.ArrayList<>();
+                    command.add(cmd);
+                    command.addAll(java.util.Arrays.asList(jvmArgs));
+                    new ProcessBuilder(command).inheritIO().start();
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("重启失败", e);
+        } finally {
+            Platform.exit();
+            System.exit(0);
+        }
+    }
 }

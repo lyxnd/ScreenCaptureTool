@@ -14,6 +14,7 @@ module net.jackchuan.screencapturetool {
     requires com.sun.jna.platform;
     requires static lombok;
     requires jdk.management;
+    requires jdk.crypto.ec;
 
 
     opens net.jackchuan.screencapturetool to javafx.fxml;

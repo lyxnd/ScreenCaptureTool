@@ -56,9 +56,25 @@ public class CaptureProperties {
     public static boolean ocrFileInstalled=false;
     public static String ocrPath;
     public static boolean showSettings=true;
-    public static boolean paste;
     public static String captureSavePath="";
-
+    public static String lastSaveDir="";
+    public static String lastUploadDir="";
+    // 代理地址，格式：http://host:port 或 socks://host:port，留空则使用系统代理
+    public static String proxyUrl="";
+    // false=覆盖原图，true=作为外部图片插入
+    public static boolean pasteAsExternalImage = false;
+    public static String dataUrl="https://pan.baidu.com/s/1l5wH3_-MT9ivvIth3Pzevg?pwd=1234";
+    // 输出尺寸模式：原图尺寸 / 50% / 75% / 150% / 200% / 自定义
+    public static String outputSizeMode = "原图尺寸";
+    public static int outputCustomWidth = 1920;
+    public static int outputCustomHeight = 1080;
+    // 空白图像大小
+    public static int blankImageWidth = 800;
+    public static int blankImageHeight = 600;
+    // 上传图片尺寸：原图尺寸 / 50% / 75% / 150% / 200% / 自定义
+    public static String uploadSizeMode = "原图尺寸";
+    public static int uploadCustomWidth = 1920;
+    public static int uploadCustomHeight = 1080;
 
     public static void updateAll(boolean flag){
         enableAll = flag;
@@ -70,7 +86,6 @@ public class CaptureProperties {
         rubber = flag;
         undo = flag;
         redo = flag;
-        paste = flag;
     }
 
     public static boolean loadProperties() throws IOException {
@@ -153,9 +168,6 @@ public class CaptureProperties {
             case "undo" -> {
                 undo = Boolean.parseBoolean(value);
             }
-            case "paste" -> {
-                paste = Boolean.parseBoolean(value);
-            }
             case "redo" -> {
                 redo = Boolean.parseBoolean(value);
             }
@@ -222,20 +234,45 @@ public class CaptureProperties {
             case "captureSavePath"->{
                 captureSavePath= value;
             }
+            case "lastSaveDir"->{
+                lastSaveDir= value;
+            }
+            case "lastUploadDir"->{
+                lastUploadDir= value;
+            }
+            case "proxyUrl"->{
+                proxyUrl= value;
+            }
+            case "pasteAsExternalImage"->{
+                pasteAsExternalImage= Boolean.parseBoolean(value);
+            }
+            case "outputSizeMode" -> outputSizeMode = value;
+            case "outputCustomWidth" -> {
+                try { outputCustomWidth = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
+            }
+            case "outputCustomHeight" -> {
+                try { outputCustomHeight = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
+            }
+            case "blankImageWidth" -> {
+                try { blankImageWidth = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
+            }
+            case "blankImageHeight" -> {
+                try { blankImageHeight = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
+            }
+            case "uploadSizeMode" -> uploadSizeMode = value;
+            case "uploadCustomWidth" -> {
+                try { uploadCustomWidth = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
+            }
+            case "uploadCustomHeight" -> {
+                try { uploadCustomHeight = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
+            }
         }
 
     }
 
     public static void updateSelectPath(String path){
         selectPath=path;
-        File f=new File(configPath);
-        f.setWritable(true);
-        try (FileWriter writer1 = new FileWriter(f)) {
-            writer1.write(toConfigString());
-            f.setWritable(false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        saveConfig();
     }
     public static File getSelectDirectory(){
         File f=new File(selectPath);
@@ -243,6 +280,39 @@ public class CaptureProperties {
             return f;
         else
             return new File(f.getParent());
+    }
+
+    public static File getSaveDirectory(){
+        String path = lastSaveDir.isBlank() ? selectPath : lastSaveDir;
+        File f = new File(path);
+        return f.isDirectory() ? f : new File(f.getParent());
+    }
+
+    public static File getUploadDirectory(){
+        String path = lastUploadDir.isBlank() ? selectPath : lastUploadDir;
+        File f = new File(path);
+        return f.isDirectory() ? f : new File(f.getParent());
+    }
+
+    public static void updateLastSaveDir(String path){
+        lastSaveDir = path;
+        saveConfig();
+    }
+
+    public static void updateLastUploadDir(String path){
+        lastUploadDir = path;
+        saveConfig();
+    }
+
+    private static void saveConfig(){
+        File f = new File(configPath);
+        f.setWritable(true);
+        try (FileWriter writer1 = new FileWriter(f)) {
+            writer1.write(toConfigString());
+            f.setWritable(false);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     public static File getLogPath() throws IOException {
         File f=new File(logPath);
@@ -309,7 +379,6 @@ public class CaptureProperties {
                 "\n rubber=" + rubber +
                 "\n undo=" + undo +
                 "\n redo=" + redo +
-                "\n paste=" + paste +
                 "\n captureKey=" + CaptureProperties.CAPTURE_KEY +
                 "\n autoCopy=" + autoCopy +
                 "\n detectMode=" + detectMode +
@@ -323,17 +392,22 @@ public class CaptureProperties {
                 "\n ocrDataPath=" + ocrPath +
                 "\n showSettings=" + showSettings +
                 "\n captureSavePath=" + captureSavePath +
+                "\n lastSaveDir=" + lastSaveDir +
+                "\n lastUploadDir=" + lastUploadDir +
+                "\n proxyUrl=" + proxyUrl +
+                "\n pasteAsExternalImage=" + pasteAsExternalImage +
+                "\n outputSizeMode=" + outputSizeMode +
+                "\n outputCustomWidth=" + outputCustomWidth +
+                "\n outputCustomHeight=" + outputCustomHeight +
+                "\n blankImageWidth=" + blankImageWidth +
+                "\n blankImageHeight=" + blankImageHeight +
+                "\n uploadSizeMode=" + uploadSizeMode +
+                "\n uploadCustomWidth=" + uploadCustomWidth +
+                "\n uploadCustomHeight=" + uploadCustomHeight +
                 "\n}";
     }
     public static void saveOnOriginalPath() {
-        File f = new File(configPath);
-        f.setWritable(true);
-        try (FileWriter writer1 = new FileWriter(f)) {
-            writer1.write(toConfigString());
-            f.setWritable(false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        saveConfig();
     }
     public static boolean checkOCR() throws IOException {
         //TODO install ocr

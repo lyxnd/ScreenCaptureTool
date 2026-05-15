@@ -104,6 +104,8 @@ public class FileHandler {
         new File(zipFilePath).delete();
     }
 
+    public static volatile Path lastCopiedTempFile = null;
+
     public static boolean copyImage(Image img) {
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
@@ -113,6 +115,7 @@ public class FileHandler {
                 Files.createDirectory(temp);
             }
             File tempFile = Files.createFile(temp.resolve(System.currentTimeMillis() + ".png")).toFile();
+            lastCopiedTempFile = tempFile.toPath();
             ImageIO.write(ImageFormatHandler.toBufferedImage(img),"png",tempFile);
             ArrayList<File> list = new ArrayList<>();
             list.add(tempFile);

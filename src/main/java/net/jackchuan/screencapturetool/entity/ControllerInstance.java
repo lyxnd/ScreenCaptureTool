@@ -1,5 +1,6 @@
 package net.jackchuan.screencapturetool.entity;
 
+import lombok.Data;
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 import net.jackchuan.screencapturetool.controller.EditRecordController;
 import net.jackchuan.screencapturetool.controller.SettingController;
@@ -9,6 +10,7 @@ import net.jackchuan.screencapturetool.controller.SettingController;
  * 作者：jackchuan
  * 日期：2024/11/23 13:30
  */
+@Data
 public class ControllerInstance {
     private static ControllerInstance instance;
     private CaptureDisplayController controller;
@@ -23,27 +25,4 @@ public class ControllerInstance {
         return instance;
     }
 
-    public void setController(CaptureDisplayController controller) {
-        this.controller = controller;
-    }
-
-    public CaptureDisplayController getController() {
-        return controller;
-    }
-
-    public EditRecordController getEditController() {
-        return editController;
-    }
-
-    public SettingController getSettingController() {
-        return settingController;
-    }
-
-    public void setEditController(EditRecordController editController) {
-        this.editController = editController;
-    }
-
-    public void setSettingController(SettingController settingController) {
-        this.settingController = settingController;
-    }
 }

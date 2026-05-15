@@ -226,7 +226,7 @@ public class DrawRecords {
         }
         Font drawFont = textFont != null ? textFont : drawableText.getFont();
         Color drawColor = textColor != null ? textColor : drawableText.getColor();
-        if (drawableText.shouldRenderBorder()) {
+        if (drawableText.isRenderBorder()) {
             gc.setStroke(Color.CYAN);
             gc.setLineWidth(3);
             gc.strokeRect(getStartX() - 5, getStartY() - getHeight() + 4, getWidth() + 5, getHeight() + 4);
@@ -246,7 +246,7 @@ public class DrawRecords {
         if (!isShouldRepaint() || "delete".equals(detailInfo)) {
             return;
         }
-        if(drawableImage.shouldRenderBorder()){
+        if(drawableImage.isRenderBorder()){
             gc.setStroke(Color.CYAN);
             gc.setLineWidth(3);
             gc.strokeRect(getStartX(), getStartY(), getWidth(), getHeight());

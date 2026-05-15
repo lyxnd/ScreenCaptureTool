@@ -60,7 +60,11 @@
                 <tooltip><Tooltip text="select color" styleClass="custom-tooltip"/></tooltip>
             </ColorPicker>
             <Slider fx:id="strokeSlider" prefWidth="100" min="1" max="10" showTickLabels="true"
-                    blockIncrement="0.5" majorTickUnit="1" minorTickCount="0"/>
+                    blockIncrement="0.5" majorTickUnit="1" minorTickCount="0">
+                <tooltip>
+                    <Tooltip text="stoke width" styleClass="custom-tooltip"/>
+                </tooltip>
+            </Slider>
             <Separator/>
             <ComboBox fx:id="processType" value="选择处理类型">
                 <items>
@@ -85,6 +89,7 @@
                         <String fx:value="同态滤波"/>
                         <String fx:value="区域生长分割"/>
                         <String fx:value="前景分割"/>
+                        <String fx:value="目标识别"/>
                     </FXCollections>
                 </items>
             </ComboBox>
@@ -96,6 +101,10 @@
             <Button styleClass="icon-button" onAction="#openSettingStage" fx:id="setting">
                 <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/setting.png"/></ImageView></graphic>
                 <tooltip><Tooltip text="open setting stage" styleClass="custom-tooltip"/></tooltip>
+            </Button>
+            <Button onAction="#restartProgram" styleClass="icon-button" fx:id="restart">
+                <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/restart.png" /></ImageView></graphic>
+                <tooltip><Tooltip text="重新启动程序" /></tooltip>
             </Button>
             <Button styleClass="icon-button" onAction="#completelyExit" fx:id="exit">
                 <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/close.png"/></ImageView></graphic>
@@ -160,6 +169,10 @@
                     <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/addText.png"/></ImageView></graphic>
                     <tooltip><Tooltip text="add text" styleClass="custom-tooltip"/></tooltip>
                 </Button>
+                <OCRPicker styleClass="icon-button" fx:id="ocr">
+                    <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/ocr.png"/></ImageView></graphic>
+                    <tooltip><Tooltip text="Optical Character Recognition" styleClass="custom-tooltip"/></tooltip>
+                </OCRPicker>
                 <EmojyPicker styleClass="icon-button" fx:id="emojy">
                     <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/emojy.png"/></ImageView></graphic>
                     <tooltip><Tooltip text="Emojy Chooser" styleClass="custom-tooltip"/></tooltip>
@@ -167,6 +180,20 @@
             </VBox>
         </ScrollPane>
     </left>
+
+    <right>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                    style="-fx-background: transparent; -fx-background-color: transparent;">
+            <VBox fx:id="rightBar" styleClass="sidebar" prefWidth="48" spacing="4" alignment="CENTER">
+                <padding><Insets top="6" bottom="6" left="4" right="4"/></padding>
+                <Label text="图标" styleClass="sidebar-label"/>
+                <Button styleClass="icon-button" onAction="#addCustomIconDir">
+                    <graphic><ImageView fitHeight="20" fitWidth="20"><Image url="@../screencapturetool/assets/icon/addImage.png"/></ImageView></graphic>
+                    <tooltip><Tooltip text="添加自定义图标目录"/></tooltip>
+                </Button>
+            </VBox>
+        </ScrollPane>
+    </right>
 
     <center>
         <StackPane fx:id="stackPane">
@@ -179,6 +206,9 @@
             <Label fx:id="state" style="-fx-font-weight: bold;-fx-text-fill: blue;"/>
             <Button text="展示原始图像" onAction="#adjustScale"><tooltip><Tooltip text="恢复原始显示尺寸"/></tooltip></Button>
             <Button text="test1" onAction="#test1"/>
+            <Label fx:id="tip" text="tips:" style="-fx-font-weight: bold;-fx-text-fill: purple;">
+                <HBox.margin><Insets top="0" right="0" bottom="0" left="10"/></HBox.margin>
+            </Label>
         </HBox>
     </bottom>
 </BorderPane>

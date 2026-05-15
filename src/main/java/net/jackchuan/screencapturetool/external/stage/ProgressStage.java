@@ -13,6 +13,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import net.jackchuan.screencapturetool.CaptureProperties;
+import net.jackchuan.screencapturetool.ScreenCaptureToolApp;
 import net.jackchuan.screencapturetool.controller.CaptureDisplayController;
 import net.jackchuan.screencapturetool.entity.ControllerInstance;
 import net.jackchuan.screencapturetool.entity.StageInstance;
@@ -72,14 +73,18 @@ public class ProgressStage extends Stage {
                 setProgress(0);
                 setTitle("下载或解压失败");
                 CaptureDisplayController controller = ControllerInstance.getInstance().getController();
-                controller.setType(-2);
-                controller.setCursorShape(Cursor.DEFAULT);
-                tip.setText("");
-                hBox.getChildren().addAll(download,url);
-                vBox.getChildren().add(btn);
-                vBox.getChildren().add(hBox);
+                if (controller != null) {
+                    controller.setType(-2);
+                    controller.setCursorShape(Cursor.DEFAULT);
+                }
+                tip.setText("下载失败，可从浏览器手动下载后在设置中配置");
+                if (!hBox.getChildren().contains(download)) {
+                    hBox.getChildren().addAll(download, url);
+                    vBox.getChildren().addAll(btn, hBox);
+                }
+                ScreenCaptureToolApp.LOGGER.info("network error , {}",exception.getMessage());
                 AlertHelper.showErrorDialog("Download failed",
-                        "Some network error occurred,Please try again later",exception.toString());
+                        "Some network error occurred,Please try again later", exception.toString());
             });
         });
         taskThread.setOnSucceeded(event -> {
